@@ -19,6 +19,7 @@ import rauth
 import urllib2
 import configparser
 import pdb
+import app.helpers.maps as maps
 
 class struct():
     pass
@@ -81,7 +82,7 @@ def get_search_parameters(lat,long,offset=0):
     #See the Yelp API for more details
     params = {}
 #     params["term"] = "restaurant"
-    params["category_filter"] = "restaurant"
+    params["category_filter"] = "restaurants"
     params["ll"] = "{},{}".format(str(lat),str(long))
     #params["radius_filter"] = "16092"
     params["sort"] = "1"
@@ -101,8 +102,12 @@ def cleanData(data):
     failures = []
     for i in range(len(businesslist)):
     
-        full_address = businesslist[i]['location']['display_address'][0] + ' '+businesslist[i]['location']['display_address'][1]
-        
+        full_address = ''
+        for a in businesslist[i]['location']['display_address']:
+            full_address = full_address +' %s'%a
+            
+#         full_address = businesslist[i]['location']['display_address'][0] + ' '+businesslist[i]['location']['display_address'][1]
+         
         try:
             loc = businesslist[i]['location']['coordinate']
             lat = loc['latitude']
@@ -138,11 +143,18 @@ def cleanData(data):
                 ]
     
     # Clean up the failures [yay ETL]
-    url = 'http://www.datasciencetoolkit.org/street2coordinates'
-    # Convert failures to json and read from web API (datasciencetoolkit.org)
-    req = urllib2.Request(url,json.dumps(failures))
-    response = urllib2.urlopen(req)
-    healing = json.loads(response.read())
+#     url = 'http://www.datasciencetoolkit.org/street2coordinates'
+#     # Convert failures to json and read from web API (datasciencetoolkit.org)
+#     req = urllib2.Request(url,json.dumps(failures))
+#     response = urllib2.urlopen(req)
+#     healing = json.loads(response.read())
+    healing = {}
+    for a in failures:
+        lat,lon,full_add,data = maps.geocode(a)
+        healing[a] = {}
+        healing[a]['latitude'] = lat
+        healing[a]['longitude'] = lon
+
     for a in healing.keys():
         try:
             df.loc[df[df['full_address']==a].index,'latitude'] = healing[a]['latitude']
@@ -190,7 +202,7 @@ def foodGroups(lat,long):
     center.long = long
     cutoff = 0.5
     
-    for i in range(3):
+    for i in range(2):
         if i == 0:
             data = fetchData(center.lat,center.long,cache=False)
         else:
