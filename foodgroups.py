@@ -142,12 +142,6 @@ def cleanData(data):
                 , latlongfound
                 ]
     
-    # Clean up the failures [yay ETL]
-#     url = 'http://www.datasciencetoolkit.org/street2coordinates'
-#     # Convert failures to json and read from web API (datasciencetoolkit.org)
-#     req = urllib2.Request(url,json.dumps(failures))
-#     response = urllib2.urlopen(req)
-#     healing = json.loads(response.read())
     healing = {}
     for a in failures:
         lat,lon,full_add,data = maps.geocode(a)
@@ -209,13 +203,14 @@ def foodGroups(lat,long):
             data = data.append(fetchData(center.lat,center.long,cache=False,offset=20*i),ignore_index=True)
     
     data['dist_to_user'] = data['distance'] * 0.000621371 #meters to miles
-    results = data[data['dist_to_user']<=cutoff]
+#     results = data[data['dist_to_user']<=cutoff]
+    results = data
     
-    while len(results)<20:
-        cutoff = cutoff * 3
-        results = data[data['dist_to_user']<=cutoff]
-        if cutoff > 7:
-            break
+#     while len(results)<20:
+#         cutoff = cutoff * 3
+#         results = data[data['dist_to_user']<=cutoff]
+#         if cutoff > 7:
+#             break
     
     n_clusters_ = 0
     eps = .2
@@ -225,7 +220,7 @@ def foodGroups(lat,long):
         X, n_clusters_,labels,core_samples_mask = clusterThose(results[['latitude','longitude']],eps=eps,min_samples=min_samples)
         min_samples = min_samples - 1
         eps += 0.1
-        if min_samples == 1:
+        if min_samples == 2:
             break
     
 #     print('Estimated number of clusters: %d' % n_clusters_)
