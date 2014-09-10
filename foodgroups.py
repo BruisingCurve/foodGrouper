@@ -80,7 +80,8 @@ def clusterThose(G,eps=0.1,min_samples=4):
 def get_search_parameters(lat,long,offset=0):
     #See the Yelp API for more details
     params = {}
-    params["term"] = "restaurant"
+#     params["term"] = "restaurant"
+    params["category_filter"] = "restaurant"
     params["ll"] = "{},{}".format(str(lat),str(long))
     #params["radius_filter"] = "16092"
     params["sort"] = "1"
