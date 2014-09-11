@@ -22,7 +22,7 @@
     <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
 
     <style>
-      #map-container { height: 500px }
+      #map-canvas { height: 500px }
     </style>
 
     <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -62,8 +62,11 @@
         <h1>Time to eat!</h1>
       </div>
       
-    <div id="map-container" class="col-md-6"></div>
-    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+    <div id="map-canvas" class="col-md-6"></div>
+<!--     <script src="http://maps.google.com/maps/api/js?sensor=false"></script> -->
+    <script type="text/javascript"
+        src="http://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=true_or_false">
+    </script>
     
     <!--==============================================================-->
         <script>    
@@ -81,9 +84,22 @@
                 iconArray[i] = { url: "http://www.googlemapsmarkers.com/v1/"+i+"/"+iconColor[i]+"/"}
             }
             
+            var heatMapData = []
             {% for result in results %}
                 maprest(var_ourmap,{{ result['lat'] }}, {{ result['long'] }}, {{ result['clusterid'] }})
+                heatMapData.push(
+                    {location: new google.maps.LatLng( {{ result['lat'] }}, {{ result['long'] }} ), weight: 1}
+                )
             {% endfor %}
+            
+            var pointArray = new google.maps.MVCArray(heatMapData)
+            
+            var heatmap = new google.maps.visualization.HeatmapLayer({
+                data: pointArray
+            });
+            
+            heatmap.setMap(var_ourmap);
+            
             
             function getMakerImage(ID) {
                 return iconArray[ID]
@@ -92,10 +108,11 @@
             function mapIt(v_lat) {
                 var var_mapoptions = {
                     center: v_lat,
-                    zoom: 14
+                    zoom: 14,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
                 };
                 
-                var var_map = new google.maps.Map(document.getElementById("map-container"),
+                var var_map = new google.maps.Map(document.getElementById("map-canvas"),
                     var_mapoptions);
                     
                 var var_marker = new google.maps.Marker({

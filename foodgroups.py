@@ -213,15 +213,24 @@ def foodGroups(lat,long):
 #             break
     
     n_clusters_ = 0
-    eps = .2
-    min_samples = 4
+    eps = 0.1
+    min_samples = 3
     
-    while n_clusters_ < 5:
-        X, n_clusters_,labels,core_samples_mask = clusterThose(results[['latitude','longitude']],eps=eps,min_samples=min_samples)
-        min_samples = min_samples - 1
-        eps += 0.1
-        if min_samples == 2:
-            break
+#     while n_clusters_ < 5:
+#         X, n_clusters_,labels,core_samples_mask = clusterThose(results[['latitude','longitude']],eps=eps,min_samples=min_samples)
+#         min_samples = min_samples - 1
+#         eps += 0.1
+#         if min_samples == 2:
+#             break
+
+    for thiseps in np.arange(0.05,1.0,0.1):
+        this_X,this_n_clusters_,this_labels,this_core_samples_mask = clusterThose(results[['latitude','longitude']],eps=thiseps,min_samples=min_samples)
+        if this_n_clusters_ > n_clusters_:
+            # Try to optimize around finding clusters
+            X = this_X
+            n_clusters_ = this_n_clusters_
+            labels = this_labels
+            core_samples_mask = this_core_samples_mask
     
 #     print('Estimated number of clusters: %d' % n_clusters_)
 #     print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))

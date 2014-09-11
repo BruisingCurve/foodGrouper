@@ -48,6 +48,3 @@ def food_groups_page():
         restaurants.append(dict(lat=clusters['X'][i][0], long=clusters['X'][i][1], clusterid=clusters['labels'][i]))
     return render_template('results.html',results=restaurants,user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
     
-@app.route("/testmap")
-def test_maps_page():
-    return render_template('testmap.html')
