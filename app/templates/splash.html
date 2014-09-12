@@ -9,7 +9,7 @@
     <meta name="author" content="">
     <link rel="icon" href="../../favicon.ico">
 
-    <title>FoodGroups</title>
+    <title>FoodGroupr</title>
 
     <!-- Bootstrap core CSS -->
     <link href="../static/css/bootstrap.min.css" rel="stylesheet">
@@ -40,7 +40,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">FoodGroups</a>
+          <a class="navbar-brand" href="/">FoodGroupr</a>
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
@@ -55,13 +55,16 @@
 
     <div class="container">
      <div class="hero-unit">
-        <h1>Welcome to FoodGroups!</h1>
+        <br><br>
+        <h1 align="center">Welcome to FoodGroupr!</h1>
  
-        <p>Where do you want to explore edibles today?</p>
+        <p align="center">Where do you want to explore edibles today?</p>
+ 
+        <br>
  
         <form role="form" action="/foodgroups" onsubmit='show_loading()' method="GET">
         <div class="form-group custom_form_width">
-          <label for="originInput">Origin:</label>
+          <label for="originInput">Let's Eat At:</label>
           <input type="text" name="origin" class="form-control" id="originInput" placeholder="e.g. San Francisco, CA">
         </div>
             <button type="submit" name="query" class="btn btn-large btn-success" onclick="testfunction()">Submit</button>
