@@ -63,7 +63,6 @@
       </div>
       
     <div id="map-canvas" class="col-md-6"></div>
-<!--     <script src="http://maps.google.com/maps/api/js?sensor=false"></script> -->
     <script type="text/javascript"
         src="http://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=true_or_false">
     </script>
@@ -78,25 +77,25 @@
             
             //Build color icons for clusters         
             var iconArray = new Array();
-            var iconColor = ["D1D1E0","FF9933","FFFF66","00CC00","0066FF","CC0099"]
+            var iconColor = ["D1D1E0","FF9933","FFFF66","00CC00","0066FF","CC0099", "FF0000","00FFFF","66FF33", "FF3399"]
             // ["gray","orange","yellow","green","blue","purple"]
             for (i = 0; i < {{ncluster}}+1 ; i++) {
                 iconArray[i] = { url: "http://www.googlemapsmarkers.com/v1/"+i+"/"+iconColor[i]+"/"}
             }
             
-            var heatMapData = []
+//             var heatMapData = []
             {% for result in results %}
                 maprest(var_ourmap,{{ result['lat'] }}, {{ result['long'] }}, {{ result['clusterid'] }})
-                heatMapData.push(
-                    {location: new google.maps.LatLng( {{ result['lat'] }}, {{ result['long'] }} ), weight: 1}
-                )
+//                 heatMapData.push(
+//                     {location: new google.maps.LatLng( {{ result['lat'] }}, {{ result['long'] }} ), weight: 1}
+//                 )
             {% endfor %}
             
-            var pointArray = new google.maps.MVCArray(heatMapData)
-            
-            var heatmap = new google.maps.visualization.HeatmapLayer({
-                data: pointArray
-            });
+//             var pointArray = new google.maps.MVCArray(heatMapData)
+//             
+//             var heatmap = new google.maps.visualization.HeatmapLayer({
+//                 data: pointArray
+//             });
             
             heatmap.setMap(var_ourmap);
             

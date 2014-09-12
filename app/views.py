@@ -42,7 +42,7 @@ def splash():
 def food_groups_page():
     user_location = request.args.get("origin")
     lat,lon,full_add,data = maps.geocode(user_location)
-    clusters = foodgroups.foodGroups(lat,lon)
+    clusters,restdata = foodgroups.foodGroups(lat,lon)
     restaurants = []
     for i in range(len(clusters['X'])):
         restaurants.append(dict(lat=clusters['X'][i][0], long=clusters['X'][i][1], clusterid=clusters['labels'][i]))

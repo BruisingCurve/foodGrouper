@@ -102,10 +102,13 @@ def cleanData(data):
     failures = []
     for i in range(len(businesslist)):
     
-        full_address = ''
-        for a in businesslist[i]['location']['display_address']:
-            full_address = full_address +' %s'%a
-            
+        try:
+            full_address = ''
+            for a in businesslist[i]['location']['display_address']:
+                full_address = full_address +' %s'%a
+        except:
+            continue    
+        
 #         full_address = businesslist[i]['location']['display_address'][0] + ' '+businesslist[i]['location']['display_address'][1]
          
         try:
@@ -125,29 +128,39 @@ def cleanData(data):
             for a in businesslist[i]['categories']:
                 categories+= a[1]+',' #lowercase
         except:
-            pdb.set_trace()
             print 'failwhale'
             pass
         
-        
-        df.loc[len(df)+1] = [businesslist[i]['name']
-                , full_address
-                , businesslist[i]['rating']
-                , businesslist[i]['review_count']
-                , businesslist[i]['distance']
-                , categories
-                , businesslist[i]['snippet_text']
-                , lat
-                , long
-                , latlongfound
-                ]
+        try:
+            df.loc[len(df)+1] = [businesslist[i]['name']
+                    , full_address
+                    , businesslist[i]['rating']
+                    , businesslist[i]['review_count']
+                    , businesslist[i]['distance']
+                    , categories
+                    , businesslist[i]['snippet_text']
+                    , lat
+                    , long
+                    , latlongfound
+                    ]
+        except:
+            pass
     
     healing = {}
     for a in failures:
-        lat,lon,full_add,data = maps.geocode(a)
-        healing[a] = {}
-        healing[a]['latitude'] = lat
-        healing[a]['longitude'] = lon
+        try:
+            lat,lon,full_add,data = maps.geocode(a)
+            healing[a] = {}
+            healing[a]['latitude'] = lat
+            healing[a]['longitude'] = lon
+        except:
+            # Clean up the failures after googlemaps struggles [yay ETL]
+            url = 'http://www.datasciencetoolkit.org/street2coordinates'
+            # Convert failures to json and read from web API (datasciencetoolkit.org)
+            req = urllib2.Request(url,json.dumps(failures))
+            response = urllib2.urlopen(req)
+            healing = json.loads(response.read())
+            break
 
     for a in healing.keys():
         try:
@@ -186,6 +199,7 @@ def fetchData(lat,long,cache=False,offset=0):
         return
 
     params = get_search_parameters(lat,long,offset=offset)
+    
     data = get_results(params)
     return data
 
@@ -201,7 +215,6 @@ def foodGroups(lat,long):
             data = fetchData(center.lat,center.long,cache=False)
         else:
             data = data.append(fetchData(center.lat,center.long,cache=False,offset=20*i),ignore_index=True)
-    
     data['dist_to_user'] = data['distance'] * 0.000621371 #meters to miles
 #     results = data[data['dist_to_user']<=cutoff]
     results = data
@@ -212,7 +225,7 @@ def foodGroups(lat,long):
 #         if cutoff > 7:
 #             break
     
-    n_clusters_ = 0
+    n_clusters_ = -1
     eps = 0.1
     min_samples = 3
     
@@ -223,10 +236,11 @@ def foodGroups(lat,long):
 #         if min_samples == 2:
 #             break
 
-    for thiseps in np.arange(0.05,1.0,0.1):
+    for thiseps in np.arange(0.05,0.5,0.1):
         this_X,this_n_clusters_,this_labels,this_core_samples_mask = clusterThose(results[['latitude','longitude']],eps=thiseps,min_samples=min_samples)
         if this_n_clusters_ > n_clusters_:
             # Try to optimize around finding clusters
+            eps = thiseps
             X = this_X
             n_clusters_ = this_n_clusters_
             labels = this_labels
@@ -244,19 +258,20 @@ def foodGroups(lat,long):
 #         % metrics.silhouette_score(X, labels))
 
     clusters = {}
+    clusters['eps'] = eps
     clusters['X'] = X
     clusters['n_clusters'] = n_clusters_
     clusters['labels'] = labels
     clusters['core_samples_mask'] = core_samples_mask
 
-    return clusters
+    return clusters, data
 
 def main():
 
     center = struct()
     center.lat = 37.786382
     center.long = -122.432883
-    clusters = foodGroups(center.lat, center.long )
+    clusters,data = foodGroups(center.lat, center.long )
     X=clusters['X']
     n_clusters_ = clusters['n_clusters']
     labels = clusters['labels']

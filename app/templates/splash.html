@@ -69,29 +69,6 @@
         
         
      </div>
-     
-    <script>
-        function getLocation() {
-            var user_location = navigator.geolocation.getCurrentPosition(successPosition,handleNoGeoLocation,options);
-            return user_location
-        }
-        
-        function testfunction() {
-            return "hello"
-        
-        function successPosition(pos) {
-            var crd = pos.coords;
-            var var_location = new google.maps.LatLng(crd.latitude,crd.longitude);
-            return var_location
-        }
-        
-        function handleNoGeoLocation() {
-                alert("Your browser doesn't support geolocation. We've placed you in Venice.");
-                var var_location = new google.maps.LatLng(45.430817,12.331516);
-                return var_location
-        }
-        
-     </script>
 
     </div><!-- /.container -->
 
