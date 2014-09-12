@@ -4,13 +4,15 @@ import os
 
 def get_API_key():
   return _d('Ul6YVN5RDhLcE5UY3FjUE8wc1RlcHlVRG4yVWMyRE8zMzA1Mml')
+  #Ul6YVN5RDhLcE5UY3FjUE8wc1RlcHlVRG4yVWMyRE8zMzA1Mml
 
 def generate_salted_API_key():
   """ This generates the key that is decoded in generate_API_key"""
   hostname = socket.gethostname()
   hostname = hostname*10
   # Insert real API key here, then run this function and save the result.
-  API_KEY = 'AIzaSyCFcGJ7guITJPowNjdizR0s26SGcJr9zlE'
+  API_KEY = 'AIzaSyCBDEKnSg3mn0zBpupvp6Mqmz60yz2p3YA'
+  #AIzaSyCFcGJ7guITJPowNjdizR0s26SGcJr9zlE
   key_len = len(API_KEY)
   salted_key = []
   for i in range(key_len):
