@@ -18,7 +18,7 @@ from sklearn.preprocessing import StandardScaler
 import rauth
 import urllib2
 import configparser
-import pdb
+import pdb, time
 import app.helpers.maps as maps
 
 class struct():
@@ -81,7 +81,6 @@ def clusterThose(G,eps=0.1,min_samples=4):
 def get_search_parameters(lat,long,offset=0):
     #See the Yelp API for more details
     params = {}
-#     params["term"] = "restaurant"
     params["category_filter"] = "restaurants"
     params["ll"] = "{},{}".format(str(lat),str(long))
     #params["radius_filter"] = "16092"
@@ -128,7 +127,6 @@ def cleanData(data):
             for a in businesslist[i]['categories']:
                 categories+= a[1]+',' #lowercase
         except:
-            print 'failwhale'
             pass
         
         try:
@@ -145,22 +143,23 @@ def cleanData(data):
                     ]
         except:
             pass
-    
-    healing = {}
-    for a in failures:
-        try:
-            lat,lon,full_add,data = maps.geocode(a)
-            healing[a] = {}
-            healing[a]['latitude'] = lat
-            healing[a]['longitude'] = lon
-        except:
-            # Clean up the failures after googlemaps struggles [yay ETL]
-            url = 'http://www.datasciencetoolkit.org/street2coordinates'
-            # Convert failures to json and read from web API (datasciencetoolkit.org)
-            req = urllib2.Request(url,json.dumps(failures))
-            response = urllib2.urlopen(req)
-            healing = json.loads(response.read())
-            break
+            
+    try:
+        url = 'http://www.datasciencetoolkit.org/street2coordinates'
+        # Convert failures to json and read from web API (datasciencetoolkit.org)
+        req = urllib2.Request(url,json.dumps(failures))
+        response = urllib2.urlopen(req)
+        healing = json.loads(response.read())
+    except:
+        healing = {}
+        for a in failures:
+            try:
+                lat,lon,full_add,data = maps.geocode(a)
+                healing[a] = {}
+                healing[a]['latitude'] = lat
+                healing[a]['longitude'] = lon
+            except:
+                break
 
     for a in healing.keys():
         try:
@@ -184,10 +183,13 @@ def get_results(params):
         ,access_token = configini['YELP']['token']
         ,access_token_secret = configini['YELP']['token_secret'])
      
+    t = time.time()
     request = session.get("http://api.yelp.com/v2/search",params=params)
-   
+    print 'fetching %f s'%(time.time() - t)
     #Transforms the JSON API response into a Pandas dataframe
+    t = time.time()
     data = cleanData(request.json())
+    print 'cleaning %f s'%(time.time()-t)
     session.close()
    
     return data
@@ -210,41 +212,36 @@ def foodGroups(lat,long):
     center.long = long
     cutoff = 0.5
     
+    t = time.time()
     for i in range(2):
         if i == 0:
             data = fetchData(center.lat,center.long,cache=False)
         else:
             data = data.append(fetchData(center.lat,center.long,cache=False,offset=20*i),ignore_index=True)
+            
+    print 'Full Retrieve %f s'%(time.time()-t)
+    
+    
     data['dist_to_user'] = data['distance'] * 0.000621371 #meters to miles
 #     results = data[data['dist_to_user']<=cutoff]
     results = data
-    
-#     while len(results)<20:
-#         cutoff = cutoff * 3
-#         results = data[data['dist_to_user']<=cutoff]
-#         if cutoff > 7:
-#             break
-    
     n_clusters_ = -1
     eps = 0.1
     min_samples = 3
     
-#     while n_clusters_ < 5:
-#         X, n_clusters_,labels,core_samples_mask = clusterThose(results[['latitude','longitude']],eps=eps,min_samples=min_samples)
-#         min_samples = min_samples - 1
-#         eps += 0.1
-#         if min_samples == 2:
-#             break
+    t = time.time()
 
     for thiseps in np.arange(0.05,0.5,0.1):
         this_X,this_n_clusters_,this_labels,this_core_samples_mask = clusterThose(results[['latitude','longitude']],eps=thiseps,min_samples=min_samples)
-        if this_n_clusters_ > n_clusters_:
+        if this_n_clusters_ >= n_clusters_:
             # Try to optimize around finding clusters
             eps = thiseps
             X = this_X
             n_clusters_ = this_n_clusters_
             labels = this_labels
             core_samples_mask = this_core_samples_mask
+            
+    print 'clustering %f s'%(time.time()-t)
     
 #     print('Estimated number of clusters: %d' % n_clusters_)
 #     print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
