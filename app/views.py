@@ -14,17 +14,6 @@ import app.helpers.maps as maps
 def splash():
     return render_template('splash.html')
         
-# @app.route('/db')
-# def cities_page():
-# 	with db: 
-# 		cur = db.cursor()
-# 		cur.execute("SELECT Name FROM city LIMIT 15;")
-# 		query_results = cur.fetchall()
-# 	cities = ""
-# 	for result in query_results:
-# 		cities += result[0]
-# 		cities += "<br>"
-# 	return cities
 	
 # @app.route("/db_fancy")
 # def cities_page_fancy():
@@ -42,9 +31,10 @@ def splash():
 def food_groups_page():
     user_location = request.args.get("origin")
     lat,lon,full_add,data = maps.geocode(user_location)
-    clusters,restdata = foodgroups.foodGroups(lat,lon)
+    clusters,restdata, cluster_info = foodgroups.foodGroups(lat,lon)
     restaurants = []
+    pdb.set_trace()
     for i in range(len(clusters['X'])):
         restaurants.append(dict(lat=clusters['X'][i][0], long=clusters['X'][i][1], clusterid=clusters['labels'][i]))
-    return render_template('newresults.html',results=restaurants,user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
+    return render_template('newresults.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
     

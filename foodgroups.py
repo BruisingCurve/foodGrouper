@@ -11,13 +11,14 @@ import scipy as sp
 import pandas as pd
 import matplotlib.pyplot as plt
 import jsonOpen, figSetup
-from collections import defaultdict
+from collections import defaultdict, Counter
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 import rauth
 import urllib2
 import configparser
+import foursquare
 import pdb, time
 import app.helpers.maps as maps
 
@@ -80,12 +81,21 @@ def clusterThose(G,eps=0.1,min_samples=4):
     
 def get_search_parameters(lat,long,offset=0):
     #See the Yelp API for more details
+#     params = {}
+#     params["category_filter"] = "restaurants"
+#     params["ll"] = "{},{}".format(str(lat),str(long))
+#     #params["radius_filter"] = "16092"
+#     params["sort"] = "1"
+#     params["limit"] = "20"
+#     params["offset"] = "%i"%offset
+    
     params = {}
-    params["category_filter"] = "restaurants"
-    params["ll"] = "{},{}".format(str(lat),str(long))
-    #params["radius_filter"] = "16092"
-    params["sort"] = "1"
-    params["limit"] = "20"
+    params['ll'] = "{},{}".format(str(lat),str(long))
+    params['limit'] = "50"
+    params['section'] = "food"
+    params['venuePhotos'] = "1"
+    params['sortByDistance'] = "1"
+    params['opneNow'] = "1"
     params["offset"] = "%i"%offset
     
     return params
@@ -171,26 +181,134 @@ def cleanData(data):
     
     return df[df['latlongfound']==1]
   
+def cleanData4Square(data):
+    ''' 
+    Clean 4Square result dictionaries into handy dataframes
+    Want business location (lat, long), business name, 
+    '''
+    
+    businesslist = data['groups'][0]['items'];
+    
+    df = pd.DataFrame(columns = ('name','full_address','rating',
+            'review_count','distance','categories','price','latitude','longitude','latlongfound',
+            'photo','hasphoto','IsOpenNow'))
+    failures = []
+    for i in range(len(businesslist)):
+    
+        try:
+            full_address = ''
+            full_address = full_address + businesslist[i]['venue']['location']['address']+', '
+            full_address = full_address + businesslist[i]['venue']['location']['formattedAddress'][1]
+        except:
+            continue
+            
+        try:
+            lat = businesslist[i]['venue']['location']['lat']
+            long = businesslist[i]['venue']['location']['lng']
+            latlongfound = 1
+        except:
+            # Probably doesn't have a coordinate
+            failures.append(full_address)
+            latlongfound = 0
+            lat = 0.0
+            long = 0.0
+             
+        categories = ''
+        try:
+            for a in businesslist[i]['venue']['categories']: categories+= a['shortName']+','
+        except:
+            pass 
+               
+        photourl = ''
+        try:
+            prefix = businesslist[i]['venue']['specials']['items'][0]['photo']['prefix']
+            suffix = businesslist[i]['venue']['specials']['items'][0]['photo']['suffix']
+            photourl = prefix + '100X100' + suffix
+            hasphoto = 2
+        except:
+            try:
+                prefix = businesslist[i]['venue']['featuredPhotos']['items'][0]['prefix']
+                suffix = businesslist[i]['venue']['featuredPhotos']['items'][0]['suffix']
+                photourl = prefix + '100X100' + suffix
+                hasphoto = 1
+            except:
+                hasphoto = 0
+                pass
+                
+        
+        try:
+            df.loc[len(df)+1] = [businesslist[i]['venue']['name']
+                    , full_address
+                    , businesslist[i]['venue']['rating']
+                    , businesslist[i]['venue']['ratingSignals']
+                    , businesslist[i]['venue']['location']['distance']
+                    , categories
+                    , businesslist[i]['venue']['price']['tier']
+                    , lat
+                    , long
+                    , latlongfound
+                    , photourl
+                    , hasphoto
+                    , businesslist[i]['venue']['hours']['isOpen']
+                    ]
+        except:
+            pass
+    
+    
+    try:
+        url = 'http://www.datasciencetoolkit.org/street2coordinates'
+        # Convert failures to json and read from web API (datasciencetoolkit.org)
+        req = urllib2.Request(url,json.dumps(failures))
+        response = urllib2.urlopen(req)
+        healing = json.loads(response.read())
+    except:
+        healing = {}
+        for a in failures:
+            try:
+                lat,lon,full_add,data = maps.geocode(a)
+                healing[a] = {}
+                healing[a]['latitude'] = lat
+                healing[a]['longitude'] = lon
+            except:
+                break
+
+    for a in healing.keys():
+        try:
+            df.loc[df[df['full_address']==a].index,'latitude'] = healing[a]['latitude']
+            df.loc[df[df['full_address']==a].index,'longitude'] = healing[a]['longitude']
+            df.loc[df[df['full_address']==a].index,'latlongfound'] = 1
+        except:
+            pass
+    
+    return df[df['latlongfound']==1]
+  
 def get_results(params):
  
     #Obtain these from Yelp's manage access page
     configini = configparser.ConfigParser()
     configini.read('app/secrets/config.ini')
     
-    session = rauth.OAuth1Session(
-        consumer_key = configini['YELP']['consumer_key']
-        ,consumer_secret = configini['YELP']['consumer_secret']
-        ,access_token = configini['YELP']['token']
-        ,access_token_secret = configini['YELP']['token_secret'])
-     
+#     session = rauth.OAuth1Session(
+#         consumer_key = configini['YELP']['consumer_key']
+#         ,consumer_secret = configini['YELP']['consumer_secret']
+#         ,access_token = configini['YELP']['token']
+#         ,access_token_secret = configini['YELP']['token_secret'])
+#     request = session.get("http://api.yelp.com/v2/search",params=params) 
+
+    client = foursquare.Foursquare(
+        client_id=configini['4SQUARE']['client_id']
+        , client_secret=configini['4SQUARE']['client_secret'])
+    
     t = time.time()
-    request = session.get("http://api.yelp.com/v2/search",params=params)
+    request = client.venues.explore(params)
     print 'fetching %f s'%(time.time() - t)
     #Transforms the JSON API response into a Pandas dataframe
     t = time.time()
-    data = cleanData(request.json())
+    #data = cleanData(request.json())
+    data = cleanData4Square(request)
+        
     print 'cleaning %f s'%(time.time()-t)
-    session.close()
+#     session.close()
    
     return data
     
@@ -201,39 +319,124 @@ def fetchData(lat,long,cache=False,offset=0):
         return
 
     params = get_search_parameters(lat,long,offset=offset)
-    
     data = get_results(params)
     return data
+    
+def pricestring(thisprice):
+    if thisprice == 1:
+        return "less than $10"
+    elif thisprice == 2:
+        return "$10 - $20"
+    elif thisprice == 3:
+        return "$20 - $30"
+    elif thisprice == 4:
+        return "$40 and up" 
+    else:
+        return ""
+        
+def clusterDescriptor(cluster_categories):
+
+
+    our_descriptors = list(cluster_categories)
+    for i in range(len(our_descriptors)):
+        our_descriptors[i] = our_descriptors[i][:-1]
+    counts = Counter()
+    for description in our_descriptors:
+        counts.update(word.strip('.,?!"\'').lower() for word in description.split(','))
+    # Take the highlights
+    highlights = counts.most_common(3)
+    
+    
+    # Human parsing
+    if len(cluster_categories) < 4:
+        des_str = "Restaurant Types: "
+        for a in set(our_descriptors):
+            des_str += a+', '
+        des_str = des_str[:-2]
+        return des_str
+    
+    if highlights[0][1]/float(len(cluster_categories)) <= 0.5:
+        des_str = "Try here for "
+        for a in highlights:
+            des_str += a[0]+ ", "
+        des_str = des_str[:-2]
+        
+        if len(cluster_categories) > len(highlights):
+            des_str += " and more."
+        else:
+            des_str += "."
+        return des_str
+        
+    else:
+        des_str = "A %s nighborhood"%(highlights[0][0])
+        if len(highlights) > 1:
+            if highlights[1][1] >= 0.33:
+                des_str += ' with some %s'%highlights[1][0]
+            else:
+                des_str += " with a dash of %s."%highlights[1][0]
+            
+        return des_str
+        
+def optimizeClusters(cluster_info):
+    '''
+    Optimize which three clusters to give the user
+    '''
+                 
+    # 3 closest
+    dist_from_user = []
+    for i in range(len(cluster_info)):
+        dist_from_user.append(cluster_info[i]['avg_dist'])
+    sorted_clusters = [i[0] for i in sorted(zip(cluster_info,dist_from_user),key= lambda l: l[1])]    
+
+    return sorted_clusters
+    
+def findName(center):
+    '''
+    Find a nearby intersection to name the cluster
+    '''
+    lat = center[0]
+    long = center[1]
+    
+    params = {}
+    params['ll'] = "{},{}".format(str(lat),str(long))
+    params['query'] = 'restaurant'
+    params['limit'] = '1'
+    params['intent'] = 'match'
+    configini = configparser.ConfigParser()
+    configini.read('app/secrets/config.ini')
+    client = foursquare.Foursquare(
+        client_id=configini['4SQUARE']['client_id']
+        , client_secret=configini['4SQUARE']['client_secret'])
+    request = client.venues.explore(params)
+    name_str = 'Head towards: '
+    name_str += request['groups'][0]['items'][0]['venue']['location']['formattedAddress'][0]
+    return name_str
+
 
 def foodGroups(lat,long):
     
     center = struct()
     center.lat = lat
     center.long = long
-    cutoff = 0.5
     
     t = time.time()
-    for i in range(2):
-        if i == 0:
-            data = fetchData(center.lat,center.long,cache=False)
-        else:
-            data = data.append(fetchData(center.lat,center.long,cache=False,offset=20*i),ignore_index=True)
-            
+    data = fetchData(center.lat,center.long,cache=False)
+
     print 'Full Retrieve %f s'%(time.time()-t)
-    
-    
     data['dist_to_user'] = data['distance'] * 0.000621371 #meters to miles
-#     results = data[data['dist_to_user']<=cutoff]
-    results = data
+
     n_clusters_ = -1
     eps = 0.1
     min_samples = 3
     
     t = time.time()
+    
+    # Only use open places [may do better with all places to build clusters?]
+    data = data[data.IsOpenNow == True]
 
     for thiseps in np.arange(0.05,0.5,0.1):
-        this_X,this_n_clusters_,this_labels,this_core_samples_mask = clusterThose(results[['latitude','longitude']],eps=thiseps,min_samples=min_samples)
-        if this_n_clusters_ >= n_clusters_:
+        this_X,this_n_clusters_,this_labels,this_core_samples_mask = clusterThose(data[['latitude','longitude']],eps=thiseps,min_samples=min_samples)
+        if this_n_clusters_ > n_clusters_:
             # Try to optimize around finding clusters
             eps = thiseps
             X = this_X
@@ -254,6 +457,31 @@ def foodGroups(lat,long):
 #     print("Silhouette Coefficient: %0.3f"
 #         % metrics.silhouette_score(X, labels))
 
+    # Let's compute cluster informatics
+    cluster_info = []
+    for jj in range(n_clusters_):
+        thiscluster = data[labels==jj]
+        cluster = {}
+        cluster["avgrating"] = np.mean(thiscluster.rating)
+        cluster["stdrating"] = np.std(thiscluster.rating)
+        cluster["avgprice"] = np.mean(thiscluster.price)
+        cluster["stdprice"] = np.std(thiscluster.price)
+        cluster["maxprice"] = np.max(thiscluster.price)
+        cluster["minprice"] = np.min(thiscluster.price)
+        cluster["maxprice_string"] = pricestring(cluster["maxprice"])
+        cluster["minprice_string"] = pricestring(cluster["minprice"])
+        cluster["rest_num"] = len(thiscluster)
+        cluster["categories"] = set(thiscluster["categories"])
+        cluster["var_score"] = float(len(set(thiscluster["categories"])))/float(len(thiscluster))
+#         cluster["hull"] = sp.spatial.ConvexHull(X[labels==jj])
+        cluster["Description"] = clusterDescriptor(thiscluster["categories"])
+        cluster["center"] = [np.mean(thiscluster['latitude']),np.mean(thiscluster['longitude'])]
+        cluster["avg_dist"] = np.mean(thiscluster['dist_to_user'])
+        cluster_info.append(cluster)
+
+    cluster_info = optimizeClusters(cluster_info)
+
+    pdb.set_trace()
     clusters = {}
     clusters['eps'] = eps
     clusters['X'] = X
@@ -261,14 +489,14 @@ def foodGroups(lat,long):
     clusters['labels'] = labels
     clusters['core_samples_mask'] = core_samples_mask
 
-    return clusters, data
+    return clusters, data, cluster_info
 
 def main():
 
     center = struct()
     center.lat = 37.786382
     center.long = -122.432883
-    clusters,data = foodGroups(center.lat, center.long )
+    clusters,data,cluster_info = foodGroups(center.lat, center.long )
     X=clusters['X']
     n_clusters_ = clusters['n_clusters']
     labels = clusters['labels']
