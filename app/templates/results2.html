@@ -51,7 +51,8 @@
     
     <!--the website -->
       <div class="container">
-       <br><br>
+      <br><br>
+
       <div class="row row-centered">
         <form role="form" action="/foodgroups" onsubmit='show_loading()' method="GET">
         <div class="form-group col-sm-10">
@@ -82,10 +83,11 @@
                     </a>
                   </h3>
                   
-                    <a class="btn btn-success pull-right" href="#">
-                        <i class="fa fa-check"></i>
-                        Get Directions
-                    </a>
+                    <form action="http://maps.google.com/maps" method="get" target="_blank">
+                    <input type="hidden" name="saddr" value="{{user_lat,user_long}}"/>
+                    <input type="hidden" name="daddr" value="{{c_info[0]['center'][0],c_info[0]['center'][1]}}"/>
+                    <input type="submit" class="btn btn-success pull-right" value="Get directions" />
+                    </form>
                   
                 </div>
                 <div id="collapseOne" class="panel-collapse collapse in">
@@ -117,10 +119,11 @@
                       Or {{ c_info[1]["name"] }} &raquo
                     </a>
                   </h3>
-                    <a class="btn btn-success pull-right" href="#">
-                        <i class="fa fa-check"></i>
-                        Get Directions
-                    </a>
+                    <form action="http://maps.google.com/maps" method="get" target="_blank">
+                    <input type="hidden" name="saddr" value="{{user_lat,user_long}}"/>
+                    <input type="hidden" name="daddr" value="{{c_info[1]['center'][0],c_info[1]['center'][1]}}"/>
+                    <input type="submit" class="btn btn-success pull-right" value="Get directions" />
+                    </form>
                 </div>
                 <div id="collapseTwo" class="panel-collapse collapse">
                   <div class="panel-body">
@@ -143,7 +146,6 @@
 
               </div>
               
-              <br>
 
               
             </div>
