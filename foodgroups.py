@@ -315,9 +315,6 @@ def get_results(params):
     
 def fetchData(lat,long,cache=False,offset=0):
 
-    if cache:
-        data = jsonOpen.jsonOpen('yelp_pheonix_business.json')
-        return
 
     params = get_search_parameters(lat,long,offset=offset)
     data = get_results(params)
@@ -350,9 +347,9 @@ def clusterDescriptor(cluster_categories):
     
     # Human parsing
     if len(cluster_categories) < 4:
-        des_str = "Restaurant Types: "
+        des_str = "There's a few restaurants here: "
         for a in set(our_descriptors):
-            des_str += a+', '
+            des_str += a.lower()+', '
         des_str = des_str[:-2]
         return des_str
     
