@@ -189,7 +189,7 @@ def cleanData4Square(data):
     
     businesslist = data['groups'][0]['items'];
     
-    df = pd.DataFrame(columns = ('name','full_address','rating',
+    df = pd.DataFrame(columns = ('name','full_address','street','rating',
             'review_count','distance','categories','price','latitude','longitude','latlongfound',
             'photo','hasphoto','IsOpenNow'))
     failures = []
@@ -239,6 +239,7 @@ def cleanData4Square(data):
         try:
             df.loc[len(df)+1] = [businesslist[i]['venue']['name']
                     , full_address
+                    , businesslist[i]['venue']['location']['address']
                     , businesslist[i]['venue']['rating']
                     , businesslist[i]['venue']['ratingSignals']
                     , businesslist[i]['venue']['location']['distance']
@@ -322,17 +323,17 @@ def fetchData(lat,long,cache=False,offset=0):
     data = get_results(params)
     return data
     
-def pricestring(thisprice):
+def priceString(thisprice):
     if thisprice == 1:
-        return "less than $10"
+        return "<$10",""
     elif thisprice == 2:
-        return "$10 - $20"
+        return "$10","$20"
     elif thisprice == 3:
-        return "$20 - $30"
+        return "$20","$30"
     elif thisprice == 4:
-        return "$40 and up" 
+        return "$40+", ""
     else:
-        return ""
+        return "",""
         
 def clusterDescriptor(cluster_categories):
 
@@ -388,31 +389,8 @@ def optimizeClusters(cluster_info):
         dist_from_user.append(cluster_info[i]['avg_dist'])
     sorted_clusters = [i[0] for i in sorted(zip(cluster_info,dist_from_user),key= lambda l: l[1])]    
 
-    return sorted_clusters
+    return sorted_clusters[:3]
     
-def findName(center):
-    '''
-    Find a nearby intersection to name the cluster
-    '''
-    lat = center[0]
-    long = center[1]
-    
-    params = {}
-    params['ll'] = "{},{}".format(str(lat),str(long))
-    params['query'] = 'restaurant'
-    params['limit'] = '1'
-    params['intent'] = 'match'
-    configini = configparser.ConfigParser()
-    configini.read('app/secrets/config.ini')
-    client = foursquare.Foursquare(
-        client_id=configini['4SQUARE']['client_id']
-        , client_secret=configini['4SQUARE']['client_secret'])
-    request = client.venues.explore(params)
-    name_str = 'Head towards: '
-    name_str += request['groups'][0]['items'][0]['venue']['location']['formattedAddress'][0]
-    return name_str
-
-
 def foodGroups(lat,long):
     
     center = struct()
@@ -432,7 +410,7 @@ def foodGroups(lat,long):
     t = time.time()
     
     # Only use open places [may do better with all places to build clusters?]
-    data = data[data.IsOpenNow == True]
+    #data = data[data.IsOpenNow == True]
 
     for thiseps in np.arange(0.05,0.5,0.1):
         this_X,this_n_clusters_,this_labels,this_core_samples_mask = clusterThose(data[['latitude','longitude']],eps=thiseps,min_samples=min_samples)
@@ -468,20 +446,33 @@ def foodGroups(lat,long):
         cluster["stdprice"] = np.std(thiscluster.price)
         cluster["maxprice"] = np.max(thiscluster.price)
         cluster["minprice"] = np.min(thiscluster.price)
-        cluster["maxprice_string"] = pricestring(cluster["maxprice"])
-        cluster["minprice_string"] = pricestring(cluster["minprice"])
+        if np.max(thiscluster.price) == np.min(thiscluster.price):
+            minprice_string,maxprice_string = priceString(cluster["maxprice"])
+            if len(maxprice_string) == 0:
+                cluster["price_string"] = minprice_string
+            else:
+                cluster["price_string"] = minprice_string + " to " + maxprice_string
+        else:
+            minprice_string,throwaway = priceString(cluster["minprice"])
+            throwaway,maxprice_string = priceString(cluster["maxprice"])
+            cluster["price_string"] = minprice_string + " to " + maxprice_string
         cluster["rest_num"] = len(thiscluster)
         cluster["categories"] = set(thiscluster["categories"])
         cluster["var_score"] = float(len(set(thiscluster["categories"])))/float(len(thiscluster))
 #         cluster["hull"] = sp.spatial.ConvexHull(X[labels==jj])
         cluster["Description"] = clusterDescriptor(thiscluster["categories"])
         cluster["center"] = [np.mean(thiscluster['latitude']),np.mean(thiscluster['longitude'])]
+        
+        # Find the point nearest the center
+        temp_cluster = thiscluster[['latitude','longitude','street']]
+        temp_cluster['dist_to_mean'] = abs(thiscluster['latitude']-cluster["center"][0]) + abs(thiscluster['longitude']-cluster['center'][1])
+        cluster["name"] = temp_cluster.sort(columns='dist_to_mean')[:1]["street"].iloc[0]
         cluster["avg_dist"] = np.mean(thiscluster['dist_to_user'])
+        cluster["open_ratio"] =  sum(thiscluster.IsOpenNow)/float(len(thiscluster))
         cluster_info.append(cluster)
 
     cluster_info = optimizeClusters(cluster_info)
-
-    pdb.set_trace()
+    
     clusters = {}
     clusters['eps'] = eps
     clusters['X'] = X

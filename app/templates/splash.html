@@ -15,7 +15,7 @@
     <link href="../static/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="starter-template.css" rel="stylesheet">
+    <link href="../static/css/starter-template.css" rel="stylesheet">
 
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
     <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
@@ -51,20 +51,20 @@
       </div>
     </div>
 
-    <br><br>
 
     <div class="container">
      <div class="hero-unit">
         <br><br>
+        <div class=well>
         <h1 align="center">Welcome to FoodGroupr!</h1>
  
         <p align="center">Where do you want to explore today?</p>
- 
+        </div>
         <br>
  
         <form role="form" action="/foodgroups" onsubmit='show_loading()' method="GET">
         <div class="form-group custom_form_width">
-          <label for="originInput">Let's Eat At:</label>
+          <label for="originInput"></label>
           <input type="text" name="origin" class="form-control" id="originInput" placeholder="e.g. San Francisco, CA">
         </div>
             <button type="submit" name="query" class="btn btn-large btn-success">Submit</button>

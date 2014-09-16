@@ -14,7 +14,7 @@
     <link href="../static/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="starter-template.css" rel="stylesheet">
+    <link href="../static/css/starter-template.css" rel="stylesheet">
 
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
     <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
@@ -48,12 +48,11 @@
       </div>
     </div>
     
-    <br><br><br><br>
     
     <!--the website -->
       <div class="container">
-
-      <div class="row">
+       <br><br>
+      <div class="row row-centered">
         <form role="form" action="/foodgroups" onsubmit='show_loading()' method="GET">
         <div class="form-group col-sm-10">
           <input type="text" name="origin" class="form-control" id="originInput" value="{{ faddress }}">
@@ -65,7 +64,7 @@
       
         <br>
       
-        <div class="row">
+        <div class="row row-centered">
           <div class="col-sm-6 bootcards-list" id="map-canvas">
             
             <div id="map-canvas" class="col-sm-6"></div>
@@ -79,7 +78,7 @@
                 <div class="panel-heading clearfix">
                   <h3 class="panel-title pull-left">
                     <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
-                      {{ c_info[0]["clean_name"] }} &raquo
+                      Head towards {{ c_info[0]["name"] }} &raquo
                     </a>
                   </h3>
                   
@@ -91,16 +90,23 @@
                 </div>
                 <div id="collapseOne" class="panel-collapse collapse in">
                   <div class="panel-body">
-                   <p> Card content...................................................
-                    ................................................................
-                    </p>
+                   <p> {{ c_info[0]['Description'] }} </p>
                   </div>
                 </div>
                 <div class="panel-footer">
-                  <small> {{ c_info[0]['Description'] }} </small>
+                  <div class = row >
+                    <div class = "col-sm-4">
+                    <small> Restaurants: {{ c_info[0]['rest_num'] }} </small>
+                    </div>
+                    <div class = "col-sm-4">
+                    <small>Rating: {{ c_info[0]['avgrating'] |round(1) }}</small>
+                    </div>
+                    <div class = "col-sm-4">
+                    <small> Price: {{c_info[0]['price_string'] }} </small>
+                    </div>
+                  </div>
                 </div>
               </div>
-              
               <br>
               
               
@@ -108,7 +114,7 @@
                 <div class="panel-heading clearfix">
                   <h3 class="panel-title pull-left">
                     <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
-                      Or {{ c_info[1]["clean_name"] }} &raquo
+                      Or {{ c_info[1]["name"] }} &raquo
                     </a>
                   </h3>
                     <a class="btn btn-success pull-right" href="#">
@@ -118,37 +124,26 @@
                 </div>
                 <div id="collapseTwo" class="panel-collapse collapse">
                   <div class="panel-body">
-                   <p> Card content... </p>
+                   <p> {{ c_info[1]['Description'] }} </p>
                   </div>
                 </div>
                 <div class="panel-footer">
-                  <small> {{ c_info[1]['Description'] }} </small>
+                  <div class = row >
+                    <div class = "col-sm-4">
+                    <small> Restaurants: {{ c_info[1]['rest_num'] }} </small>
+                    </div>
+                    <div class = "col-sm-4">
+                    <small>Rating: {{ c_info[1]['avgrating'] |round(1) }}</small>
+                    </div>
+                    <div class = "col-sm-4">
+                    <small> Price: {{c_info[1]['price_string'] }} </small>
+                    </div>
+                  </div>
                 </div>
+
               </div>
               
               <br>
-              
-              <div class="panel panel-default" id="card3">
-                <div class="panel-heading clearfix">
-                  <h3 class="panel-title pull-left">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree">
-                      {{ c_info[2]["clean_name"] }} &raquo
-                    </a>
-                  </h3>
-                    <a class="btn btn-success pull-right" href="#">
-                        <i class="fa fa-check"></i>
-                        Get Directions!
-                    </a>
-                </div>
-                <div id="collapseThree" class="panel-collapse collapse">
-                  <div class="panel-body">
-                   <p> Card content... </p>
-                  </div>
-                </div>
-                <div class="panel-footer">
-                  <small> {{ c_info[2]['Description'] }} </small>
-                </div>
-              </div>
 
               
             </div>
