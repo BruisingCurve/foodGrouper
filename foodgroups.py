@@ -375,20 +375,40 @@ def clusterDescriptor(cluster_categories):
             
         return des_str
         
-def optimizeClusters(cluster_info):
+def optimizeClusters(cluster_info,key=0):
     '''
     Optimize which three clusters to give the user
+    optional parameter key controls which optimization to use
+    key = 1 (distance, current default)
+    key = 2 (price)
+    key = 3 (rating)
+    key = 0 (most popular)
     '''
+          
+    # 3 most popular
+    if key == 0:
+        pop = []
+        for i in range(len(cluster_info)):
+            pop.append(cluster_info[i]['reviews'])
+        sorted_clusters = [i[0] for i in sorted(zip(cluster_info,pop),key= lambda l: l[1],reverse=True)] 
                  
     # 3 closest
-    dist_from_user = []
-    for i in range(len(cluster_info)):
-        dist_from_user.append(cluster_info[i]['avg_dist'])
-    sorted_clusters = [i[0] for i in sorted(zip(cluster_info,dist_from_user),key= lambda l: l[1])]    
+    if key == 1:
+        dist_from_user = []
+        for i in range(len(cluster_info)):
+            dist_from_user.append(cluster_info[i]['avg_dist'])
+        sorted_clusters = [i[0] for i in sorted(zip(cluster_info,dist_from_user),key= lambda l: l[1])]  
+        
+    # 3 best rated
+    if key == 3:
+        rat = []
+        for i in range(len(cluster_info)):
+            rat.append(cluster_info[i]['avgrating'])
+        sorted_clusters = [i[0] for i in sorted(zip(cluster_info,rat),key= lambda l: l[1],reverse=True)]
 
-    return sorted_clusters[:3]
+    return sorted_clusters
     
-def foodGroups(lat,long):
+def foodGroups(lat,long,key=0):
     
     center = struct()
     center.lat = lat
@@ -421,28 +441,26 @@ def foodGroups(lat,long):
             
     print 'clustering %f s'%(time.time()-t)
     
-#     print('Estimated number of clusters: %d' % n_clusters_)
-#     print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
-#     print("Completeness: %0.3f" % metrics.completeness_score(labels_true, labels))
-#     print("V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels))
-#     print("Adjusted Rand Index: %0.3f"
-#         % metrics.adjusted_rand_score(labels_true, labels))
-#     print("Adjusted Mutual Information: %0.3f"
-#         % metrics.adjusted_mutual_info_score(labels_true, labels))
-#     print("Silhouette Coefficient: %0.3f"
-#         % metrics.silhouette_score(X, labels))
 
     # Let's compute cluster informatics
     cluster_info = []
     for jj in range(n_clusters_):
         thiscluster = data[labels==jj]
         cluster = {}
+        cluster["label"] = jj
         cluster["avgrating"] = np.mean(thiscluster.rating)
         cluster["stdrating"] = np.std(thiscluster.rating)
         cluster["avgprice"] = np.mean(thiscluster.price)
         cluster["stdprice"] = np.std(thiscluster.price)
         cluster["maxprice"] = np.max(thiscluster.price)
         cluster["minprice"] = np.min(thiscluster.price)
+        cluster["reviews"] = sum(thiscluster.review_count)
+        
+        if len(data[labels==-1])>3:
+            cluster["popularity"] = np.mean(thiscluster.review_count)/float(np.mean(data[labels==-1].review_count))
+        else:
+            cluster["popularity"] = np.mean(thiscluster.review_count)
+        
         if np.max(thiscluster.price) == np.min(thiscluster.price):
             minprice_string,maxprice_string = priceString(cluster["maxprice"])
             if len(maxprice_string) == 0:
@@ -455,7 +473,6 @@ def foodGroups(lat,long):
             cluster["price_string"] = minprice_string + " to " + maxprice_string
         cluster["rest_num"] = len(thiscluster)
         cluster["categories"] = set(thiscluster["categories"])
-        cluster["var_score"] = float(len(set(thiscluster["categories"])))/float(len(thiscluster))
 #         cluster["hull"] = sp.spatial.ConvexHull(X[labels==jj])
         cluster["Description"] = clusterDescriptor(thiscluster["categories"])
         cluster["center"] = [np.mean(thiscluster['latitude']),np.mean(thiscluster['longitude'])]
@@ -468,8 +485,18 @@ def foodGroups(lat,long):
         cluster["open_ratio"] =  sum(thiscluster.IsOpenNow)/float(len(thiscluster))
         cluster_info.append(cluster)
 
-    cluster_info = optimizeClusters(cluster_info)
+    cluster_info = optimizeClusters(cluster_info,key=key)
     
+    # Order the data
+    data['labels'] = labels
+    newdata = pd.DataFrame(columns=data.columns)
+    ranking = 0
+    for a in cluster_info:
+        ranking += 1
+        thiscluster = data[data['labels']==a['label']]
+        thiscluster['ranking'] = ranking
+        newdata = pd.concat([newdata,thiscluster],axis=0)
+        
     clusters = {}
     clusters['eps'] = eps
     clusters['X'] = X
@@ -477,7 +504,7 @@ def foodGroups(lat,long):
     clusters['labels'] = labels
     clusters['core_samples_mask'] = core_samples_mask
 
-    return clusters, data, cluster_info
+    return clusters, newdata, cluster_info
 
 def main():
 

@@ -33,10 +33,13 @@ def food_groups_page():
     lat,lon,full_add,data = maps.geocode(user_location)
     clusters,restdata, cluster_info = foodgroups.foodGroups(lat,lon)
     restaurants = []
-    for i in range(len(clusters['X'])):
-        restaurants.append(dict(lat=clusters['X'][i][0], long=clusters['X'][i][1], clusterid=clusters['labels'][i]))
-        
-    if len(cluster_info) == 3:
+    for ix,a in restdata.iterrows():
+        thisdat = a
+        restaurants.append(dict(lat=thisdat['latitude']
+                ,long=thisdat['longitude']
+                ,clusterid=thisdat['ranking']
+                ))        
+    if len(cluster_info) >= 3:
         return render_template('results3.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
     elif len(cluster_info) == 2:
         return render_template('results2.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])

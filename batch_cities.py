@@ -14,7 +14,7 @@ import time
 from threading import Thread
 from random import randint
 
-def noInterrupt(con,cur,insert,df,cluster_results):
+def noInterrupt(con,cur,insert,df,c_info,cluster_results):
     try:
         
         cur.execute(insert)
@@ -33,9 +33,40 @@ def noInterrupt(con,cur,insert,df,cluster_results):
         useful_rid = []
         for a in our_r_id:
             useful_rid.append(a[0])
+            
         cluster_results['result_id'] = useful_rid[::-1]
-               
+        cluster_results['request_id'] = our_id[0]
+        
+        
+#         temp_info = c_info[['label','avg_dist','avgprice','avgrating','request_id','maxprice','minprice','rest_num',
+#             'stdprice','stdrating','var_score','rest_frac']]
+        for a in c_info:
+            a['request_id'] = our_id[0]
+            
+            cinfo_insert = "Insert into foodgrouper.ClusterInfo(label,avg_dist,avgprice,avgrating,request_id,maxprice,minprice,rest_num,stdprice,stdrating,var_score,rest_frac,n_review,review_frac) values (%i,%f,%f,%f,%i,%i,%i,%i,%f,%f,%f,%f,%i,%f);"%(
+                        a['label'],
+                        a['avg_dist'],
+                        a['avgprice'],
+                        a['avgrating'],
+                        a['request_id'],
+                        a['maxprice'],
+                        a['minprice'],
+                        a['rest_num'],
+                        a['stdprice'],
+                        a['stdrating'],
+                        a['var_score'],
+                        a['rest_frac'],
+                        a['reviews'],
+                        a['review_frac']
+                        )
+            cur.execute(cinfo_insert)
+            con.commit()
+        
         cluster_results.to_sql(name='ClusterResults',con=con,flavor='mysql',if_exists='append',index=True)
+ 
+        
+        
+        
         
     finally:
         pass
@@ -47,9 +78,9 @@ def main():
     df = psql.frame_query(query, db)
     cur = db.cursor()
     
-    for i in range(103,len(df[['latitude','longitude']])):
+    for i in range(89,len(df[['latitude','longitude']])):
         latlong = df[['latitude','longitude']][i-1:i]
-        clusters,data = foodgroups.foodGroups(latlong['latitude'][i-1],latlong['longitude'][i-1])
+        clusters,data,c_info = foodgroups.foodGroups(latlong['latitude'][i-1],latlong['longitude'][i-1])
         
         cluster_results = pd.DataFrame()
         cluster_results['labels'] = clusters['labels']
@@ -58,10 +89,10 @@ def main():
         
         insert_request = "INSERT INTO foodgrouper.requests(latitude,longitude,City,State) VALUES (%f, %f, '%s', '%s');"%(latlong['latitude'][i-1]
                 ,latlong['longitude'][i-1],df['City'][i-1:i][i-1],df['State'][i-1:i][i-1])
-                
+               
         print "Writing city %i: %s, %s data to DB."%(i,df['City'][i-1:i][i-1],df['State'][i-1:i][i-1])
         
-        a = Thread(target=noInterrupt, args=(db,cur,insert_request,data,cluster_results))
+        a = Thread(target=noInterrupt, args=(db,cur,insert_request,data,c_info,cluster_results))
         a.start()
         a.join()
         time.sleep(randint(1,3))
