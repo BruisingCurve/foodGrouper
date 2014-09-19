@@ -1,6 +1,5 @@
 body {
   padding-top: 50px;
-  background: url('../images/pageBackground.jpg') no-repeat center center fixed;
 }
 .starter-template {
   padding: 40px 15px;
@@ -9,3 +8,7 @@ body {
 .well {
     background-color: rgba( 245, 245, 245, 0.3);
 }
+
+#map-canvas { 
+    height: 400px 
+    }

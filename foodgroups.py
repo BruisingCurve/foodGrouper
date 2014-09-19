@@ -21,6 +21,7 @@ import configparser
 import foursquare
 import pdb, time
 import app.helpers.maps as maps
+import pymysql as mdb
 
 class struct():
     pass
@@ -95,7 +96,7 @@ def get_search_parameters(lat,long,offset=0):
     params['section'] = "food"
     params['venuePhotos'] = "1"
     params['sortByDistance'] = "1"
-    params['opneNow'] = "1"
+    params['openNow'] = "1"
     params["offset"] = "%i"%offset
     
     return params
@@ -288,13 +289,6 @@ def get_results(params):
     #Obtain these from Yelp's manage access page
     configini = configparser.ConfigParser()
     configini.read('app/secrets/config.ini')
-    
-#     session = rauth.OAuth1Session(
-#         consumer_key = configini['YELP']['consumer_key']
-#         ,consumer_secret = configini['YELP']['consumer_secret']
-#         ,access_token = configini['YELP']['token']
-#         ,access_token_secret = configini['YELP']['token_secret'])
-#     request = session.get("http://api.yelp.com/v2/search",params=params) 
 
     client = foursquare.Foursquare(
         client_id=configini['4SQUARE']['client_id']
@@ -314,6 +308,20 @@ def get_results(params):
     return data
     
 def fetchData(lat,long,cache=False,offset=0):
+    '''
+    This fetches data live from the fsq api, if cache = true it compares to the backend
+    mysql database to display the closest data held to current latlong.
+    '''
+
+    if cache:
+        configini = configparser.ConfigParser()
+        configini.read('app/secrets/config.ini')
+        db = mdb.connect(user=configini['MYSQL']['user'],host="localhost"
+            ,passwd=configini['MYSQL']['word'],db=configini['MYSQL']['db'])
+        query = 'SELECT request_id, city FROM requests WHERE (latitude >= (%f *.9) and latitude <= (%f *1.1))'%(lat,lat)
+        query +=' and (longitude >= (%f *.9) and longitude <= (%f *1.1)'%(long,long)
+        query += 'order by abs((latitude - %f) + (longitude - %f)) limit 1'%(lat,long)
+        pdb.set_trace()
 
 
     params = get_search_parameters(lat,long,offset=offset)
@@ -342,25 +350,32 @@ def clusterDescriptor(cluster_categories):
     for description in our_descriptors:
         counts.update(word.strip('.,?!"\'').lower() for word in description.split(','))
     # Take the highlights
-    highlights = counts.most_common(3)
+    highlights = counts.most_common(4)
     
     
     # Human parsing
     if len(cluster_categories) < 4:
-        des_str = "There's a few restaurants here: "
+        cat_count = 0
+        des_str = "Edible genres include: "
         for a in set(our_descriptors):
-            des_str += a.lower()+', '
-        des_str = des_str[:-2]
+            cat_count += 1
+            des_str += a.lower()
+            if cat_count < len(set(our_descriptors))-1:
+                des_str += ', '
+            elif cat_count == len(set(our_descriptors))-1:
+                des_str += ' and '
+            else:
+                des_str += " here."
         return des_str
     
     if highlights[0][1]/float(len(cluster_categories)) <= 0.5:
-        des_str = "Try here for "
+        des_str = "Try this lcoation for "
         for a in highlights:
             des_str += a[0]+ ", "
         des_str = des_str[:-2]
         
         if len(cluster_categories) > len(highlights):
-            des_str += " and more."
+            des_str += " and %i other categories."%(len(counts)-3)
         else:
             des_str += "."
         return des_str
@@ -369,7 +384,7 @@ def clusterDescriptor(cluster_categories):
         des_str = "A %s nighborhood"%(highlights[0][0])
         if len(highlights) > 1:
             if highlights[1][1] >= 0.33:
-                des_str += ' with some %s'%highlights[1][0]
+                des_str += ' with some %s places'%highlights[1][0]
             else:
                 des_str += " with a dash of %s."%highlights[1][0]
             
@@ -383,32 +398,48 @@ def optimizeClusters(cluster_info,key=0):
     key = 2 (price)
     key = 3 (rating)
     key = 0 (most popular)
+    key = 4 (most variety)
     '''
           
-    # 3 most popular
+    # Create keys for sorting
+    pop = []
+    dist_from_user = []
+    rat = []
+    price = []
+    vari = []
+    keychain = []
+    for i in range(len(cluster_info)):
+        pop.append(cluster_info[i]['reviews'])
+        price.append(cluster_info[i]['avgprice'])
+        keychain.append(cluster_info[i]['label'])
+        dist_from_user.append(cluster_info[i]['avg_dist'])
+        rat.append(cluster_info[i]['avgrating'])
+        vari.append(len(set(cluster_info[i]['categories'])))
+    
+    # sort by reviews
     if key == 0:
-        pop = []
-        for i in range(len(cluster_info)):
-            pop.append(cluster_info[i]['reviews'])
         sorted_clusters = [i[0] for i in sorted(zip(cluster_info,pop),key= lambda l: l[1],reverse=True)] 
-                 
     # 3 closest
-    if key == 1:
-        dist_from_user = []
-        for i in range(len(cluster_info)):
-            dist_from_user.append(cluster_info[i]['avg_dist'])
+    elif key == 1:
         sorted_clusters = [i[0] for i in sorted(zip(cluster_info,dist_from_user),key= lambda l: l[1])]  
-        
+    elif key == 2:
+        sorted_clusters = [i[0] for i in sorted(zip(cluster_info,price),key = lambda l: l[1])]
     # 3 best rated
-    if key == 3:
-        rat = []
-        for i in range(len(cluster_info)):
-            rat.append(cluster_info[i]['avgrating'])
-        sorted_clusters = [i[0] for i in sorted(zip(cluster_info,rat),key= lambda l: l[1],reverse=True)]
+    elif key == 3:
+        sorted_clusters = [i[0] for i in sorted(zip(cluster_info,rat),key= lambda l: l[1],reverse=True)]  
+    elif key == 4:
+        sorted_clusters = [i[0] for i in sorted(zip(cluster_info,vari),key= lambda l: l[1],reverse=True)]  
+    else:
+        sorted_clusters = [i[0] for i in sorted(zip(cluster_info,pop),key= lambda l: l[1],reverse=True)]
 
     return sorted_clusters
     
 def foodGroups(lat,long,key=0):
+    '''
+    foodGroups: The method for building your foodgroups.
+    Note: default behavior used popularity as the sorting metric (key=0) and only looks for 
+        currently open restaurants [for all restaurants edit openNow in get_search_parameters
+    '''
     
     center = struct()
     center.lat = lat
@@ -425,9 +456,6 @@ def foodGroups(lat,long,key=0):
     min_samples = 3
     
     t = time.time()
-    
-    # Only use open places [may do better with all places to build clusters?]
-    #data = data[data.IsOpenNow == True]
 
     for thiseps in np.arange(0.05,0.5,0.1):
         this_X,this_n_clusters_,this_labels,this_core_samples_mask = clusterThose(data[['latitude','longitude']],eps=thiseps,min_samples=min_samples)
@@ -455,6 +483,7 @@ def foodGroups(lat,long,key=0):
         cluster["maxprice"] = np.max(thiscluster.price)
         cluster["minprice"] = np.min(thiscluster.price)
         cluster["reviews"] = sum(thiscluster.review_count)
+        cluster["review_frac"] = cluster["reviews"]/float(sum(data.review_count))
         
         if len(data[labels==-1])>3:
             cluster["popularity"] = np.mean(thiscluster.review_count)/float(np.mean(data[labels==-1].review_count))
@@ -471,8 +500,11 @@ def foodGroups(lat,long,key=0):
             minprice_string,throwaway = priceString(cluster["minprice"])
             throwaway,maxprice_string = priceString(cluster["maxprice"])
             cluster["price_string"] = minprice_string + " to " + maxprice_string
+            
         cluster["rest_num"] = len(thiscluster)
+        cluster["rest_frac"] = len(thiscluster)/float(len(data))
         cluster["categories"] = set(thiscluster["categories"])
+        cluster["var_score"] = len(set(thiscluster["categories"]))/float(len(thiscluster))
 #         cluster["hull"] = sp.spatial.ConvexHull(X[labels==jj])
         cluster["Description"] = clusterDescriptor(thiscluster["categories"])
         cluster["center"] = [np.mean(thiscluster['latitude']),np.mean(thiscluster['longitude'])]

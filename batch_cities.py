@@ -13,10 +13,20 @@ import pdb
 import time
 from threading import Thread
 from random import randint
+import unicodedata
+
+def cleanData(df):
+    '''
+    Clean up possible unicode characters in the data
+    '''
+    df.full_address = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.full_address]
+    df.name = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.name]
+    df.categories = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.categories]
+    df.street = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.street]
+    return df
 
 def noInterrupt(con,cur,insert,df,c_info,cluster_results):
     try:
-        
         cur.execute(insert)
         con.commit()
         our_id_q = 'SELECT MAX(request_id) FROM foodgrouper.requests;'
@@ -24,6 +34,8 @@ def noInterrupt(con,cur,insert,df,c_info,cluster_results):
         our_id = cur.fetchone()
         cluster_results['request_id'] = our_id[0]
         df['request_id'] = our_id[0]
+        
+        df = cleanData(df)
         df.to_sql(name='Results',con=con,flavor='mysql',if_exists='append',index=True)
         
         # Saved the restaurants now save their cluster information
@@ -62,12 +74,9 @@ def noInterrupt(con,cur,insert,df,c_info,cluster_results):
             cur.execute(cinfo_insert)
             con.commit()
         
+        
         cluster_results.to_sql(name='ClusterResults',con=con,flavor='mysql',if_exists='append',index=True)
- 
-        
-        
-        
-        
+  
     finally:
         pass
         
@@ -78,7 +87,7 @@ def main():
     df = psql.frame_query(query, db)
     cur = db.cursor()
     
-    for i in range(89,len(df[['latitude','longitude']])):
+    for i in range(157,len(df[['latitude','longitude']])):
         latlong = df[['latitude','longitude']][i-1:i]
         clusters,data,c_info = foodgroups.foodGroups(latlong['latitude'][i-1],latlong['longitude'][i-1])
         

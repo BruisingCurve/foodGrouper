@@ -15,14 +15,7 @@
 
     <!-- Custom styles for this template -->
     <link href="../static/css/starter-template.css" rel="stylesheet">
-
-    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-    <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
     
-    <style>
-      #map-canvas { height: 400px }
-    </style>
     
     </head>
     
@@ -42,6 +35,7 @@
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li><a href="#about">About</a></li>
+            <li><a href="/blog">Blog</a></li>
             <li><a href="#contact">Contact</a></li>
           </ul>
         </div><!--/.nav-collapse -->
@@ -55,134 +49,80 @@
 
       <div class="row row-centered">
         <form role="form" action="/foodgroups" onsubmit='show_loading()' method="GET">
-        <div class="form-group col-sm-10">
+        
+        <div class="form-group col-centered col-sm-9">
           <input type="text" name="origin" class="form-control" id="originInput" value="{{ faddress }}">
         </div>
-            <button type="submit" name="query" class="btn btn-large btn-success col-sm-2">Submit</button>
+        <div class="col-sm-3">
+          <button type="submit" name="keychain" value="0" class="btn btn-large btn-success col-centered col-sm-12">Submit</button>
+        </div>
+        
+        <div class="btn-group col-sm-12">
+            <button type="submit" name="keychain" value="3" class="btn btn-large btn-default col-centered col-sm-3">Rating</button>
+            <button type="submit" name="keychain" value="1" class="btn btn-large btn-default col-centered col-sm-3">Distance</button>
+            <button type="submit" name="keychain" value="2" class="btn btn-large btn-default col-centered col-sm-3">Price</button>
+            <button type="submit" name="keychain" value="4" class="btn btn-large btn-default col-centered col-sm-3">Variety</button>
+        </div>
+        
         </form>
       
       </div>
       
         <br>
       
-        <div class="row row-centered">
+        <div class="col-sm-12">
           <div class="col-sm-6 bootcards-list" id="map-canvas">
             
             <div id="map-canvas" class="col-sm-6"></div>
         
           </div>
           
+          
           <div class="col-sm-6">
             <div class="panel-group" id="accordion">
-            
+              {% for thiscard in c_info %}
+              {% if loop.index < 4 %}
               <div class="panel panel-default">
                 <div class="panel-heading clearfix">
-                  <h3 class="panel-title pull-left">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
-                      Head towards {{ c_info[0]["name"] }} &raquo
+                  <h5 class="panel-title pull-left">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ loop.index }}">
+                      Option {{ loop.index }}: <br> Head towards {{ thiscard["name"] }} &raquo
                     </a>
-                  </h3>
+                  </h5>
                   
                     <form action="http://maps.google.com/maps" method="get" target="_blank">
                     <input type="hidden" name="saddr" value="{{user_lat,user_long}}"/>
-                    <input type="hidden" name="daddr" value="{{c_info[0]['center'][0],c_info[0]['center'][1]}}"/>
+                    <input type="hidden" name="daddr" value="{{thiscard['center'][0],thiscard['center'][1]}}"/>
                     <input type="submit" class="btn btn-success pull-right" value="Get directions" />
                     </form>
                   
                 </div>
-                <div id="collapseOne" class="panel-collapse collapse in">
+                {% if loop.index == 1 %}
+                  <div id="collapse{{ loop.index }}" class="panel-collapse collapse in">
+                {% else %}
+                  <div id="collapse{{ loop.index }}" class="panel-collapse collapse">
+                {% endif %}
                   <div class="panel-body">
-                   <p> {{ c_info[0]['Description'] }} </p>
+                   <p> {{ thiscard['Description'] }} </p>
                   </div>
                 </div>
                 <div class="panel-footer">
                   <div class = row >
                     <div class = "col-sm-4">
-                    <small> Restaurants: {{ c_info[0]['rest_num'] }} </small>
+                    <small> Restaurants: {{ thiscard['rest_num'] }} </small>
                     </div>
                     <div class = "col-sm-4">
-                    <small>Rating: {{ c_info[0]['avgrating'] |round(1) }}</small>
+                    <small>Rating: {{ thiscard['avgrating'] |round(1) }}</small>
                     </div>
                     <div class = "col-sm-4">
-                    <small> Price: {{c_info[0]['price_string'] }} </small>
+                    <small> Price: {{thiscard['price_string'] }} </small>
                     </div>
                   </div>
                 </div>
               </div>
               <br>
-              
-              
-              <div class="panel panel-default" id="card2">
-                <div class="panel-heading clearfix">
-                  <h3 class="panel-title pull-left">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
-                      Or {{ c_info[1]["name"] }} &raquo
-                    </a>
-                  </h3>
-                    <form action="http://maps.google.com/maps" method="get" target="_blank">
-                    <input type="hidden" name="saddr" value="{{user_lat,user_long}}"/>
-                    <input type="hidden" name="daddr" value="{{c_info[1]['center'][0],c_info[1]['center'][1]}}"/>
-                    <input type="submit" class="btn btn-success pull-right" value="Get directions" />
-                    </form>
-                </div>
-                <div id="collapseTwo" class="panel-collapse collapse">
-                  <div class="panel-body">
-                   <p> {{ c_info[1]['Description'] }} </p>
-                  </div>
-                </div>
-                <div class="panel-footer">
-                  <div class = row >
-                    <div class = "col-sm-4">
-                    <small> Restaurants: {{ c_info[1]['rest_num'] }} </small>
-                    </div>
-                    <div class = "col-sm-4">
-                    <small>Rating: {{ c_info[1]['avgrating'] |round(1) }}</small>
-                    </div>
-                    <div class = "col-sm-4">
-                    <small> Price: {{c_info[1]['price_string'] }} </small>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-              
-              <br>
-              
-              <div class="panel panel-default" id="card2">
-                <div class="panel-heading clearfix">
-                  <h3 class="panel-title pull-left">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseThree">
-                      Or {{ c_info[2]["name"] }} &raquo
-                    </a>
-                  </h3>
-                    <form action="http://maps.google.com/maps" method="get" target="_blank">
-                    <input type="hidden" name="saddr" value="{{user_lat,user_long}}"/>
-                    <input type="hidden" name="daddr" value="{{c_info[2]['center'][1],c_info[2]['center'][1]}}"/>
-                    <input type="submit" class="btn btn-success pull-right" value="Get directions" />
-                    </form>
-                </div>
-                <div id="collapseThree" class="panel-collapse collapse">
-                  <div class="panel-body">
-                   <p> {{ c_info[2]['Description'] }} </p>
-                  </div>
-                </div>
-                <div class="panel-footer">
-                  <div class = row >
-                    <div class = "col-sm-4">
-                    <small> Restaurants: {{ c_info[2]['rest_num'] }} </small>
-                    </div>
-                    <div class = "col-sm-4">
-                    <small>Rating: {{ c_info[2]['avgrating'] |round(1) }}</small>
-                    </div>
-                    <div class = "col-sm-4">
-                    <small> Price: {{c_info[2]['price_string'] }} </small>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              
+              {% endif %}
+              {% endfor %}
             </div>
           </div>
         </div>
@@ -196,57 +136,36 @@
         src="http://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=true_or_false">
     </script>
     
-    <!-- Hiding and showing content    -->
-    <script>
-        function hide_cards() {
-        
-            if ({{ncluster}} < 2) {
-                $("#card2").remove();
-            }
-            if ({{ncluster}} < 3) {
-                $("#card3").remove();
-            }
-        }
-        window.onload = hide_cards
-    </script>
+
     
     <script>    
     function init_map() {
         
         var var_location = new google.maps.LatLng({{ user_lat }}, {{ user_long }});
         
-        var var_ourmap = mapIt(var_location)
+        var bounds = new google.maps.LatLngBounds ();
+        var var_ourmap = mapIt(var_location,bounds)
         
         //Build color icons for clusters         
         var iconArray = new Array();
-        var iconColor = ["D1D1E0","FF9933","FFFF66","00CC00","0066FF","CC0099", "FF0000","00FFFF","66FF33", "FF3399"]
-        // ["gray","orange","yellow","green","blue","purple"]
+        var iconColor = ["D1D1E0","00CC00","FFFF66","FF9933","0066FF","CC0099","FF0000","00FFFF","66FF33", "FF3399"]
         for (i = 0; i < {{ncluster}}+1 ; i++) {
             iconArray[i] = { url: "http://www.googlemapsmarkers.com/v1/"+i+"/"+iconColor[i]+"/"}
         }
-        
-//             var heatMapData = []
+
         {% for result in results %}
-            maprest(var_ourmap,{{ result['lat'] }}, {{ result['long'] }}, {{ result['clusterid'] }})
-//                 heatMapData.push(
-//                     {location: new google.maps.LatLng( {{ result['lat'] }}, {{ result['long'] }} ), weight: 1}
-//                 )
+            {% if result['clusterid'] < 4 %}
+                maprest(var_ourmap,bounds,{{ result['lat'] }}, {{ result['long'] }}, {{ result['clusterid'] }})
+            {% endif %}
         {% endfor %}
         
-//             var pointArray = new google.maps.MVCArray(heatMapData)
-//             
-//             var heatmap = new google.maps.visualization.HeatmapLayer({
-//                 data: pointArray
-//             });
-        
-        heatmap.setMap(var_ourmap);
-        
+        var_ourmap.fitBounds (bounds);
         
         function getMakerImage(ID) {
             return iconArray[ID]
         }
         
-        function mapIt(v_lat) {
+        function mapIt(v_lat,bounds) {
             var var_mapoptions = {
                 center: v_lat,
                 zoom: 14,
@@ -262,12 +181,13 @@
                 title:"You"});
 
             var_marker.setMap(var_map);   
-            
+            bounds.extend(v_lat)
             return var_map
         }
         
-        function maprest(this_map,thislat,thislong,thisID) {
+        function maprest(this_map,bounds,thislat,thislong,thisID) {
             var latlong = new google.maps.LatLng(thislat,thislong)
+            bounds.extend(latlong);
 
             var this_marker = new google.maps.Marker({
                 position: latlong,
@@ -282,7 +202,8 @@
          
     }
 
-google.maps.event.addDomListener(window, 'load', init_map);
+    google.maps.event.addDomListener(window, 'load', init_map);
+
 </script>
 
     <!-- Bootstrap core JavaScript

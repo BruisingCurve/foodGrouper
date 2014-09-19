@@ -57,6 +57,7 @@
         <form role="form" action="/foodgroups" onsubmit='show_loading()' method="GET">
         <div class="form-group col-sm-10">
           <input type="text" name="origin" class="form-control" id="originInput" value="{{ faddress }}">
+          <input type="hidden" name="keychain" value="0"/>
         </div>
             <button type="submit" name="query" class="btn btn-large btn-success col-sm-2">Submit</button>
         </form>

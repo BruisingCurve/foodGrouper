@@ -1,5 +1,5 @@
 from app import app
-from flask import render_template, request
+from flask import render_template, request, flash, redirect, url_for
 import pymysql as mdb
 import foodgroups
 import jinja2
@@ -15,34 +15,30 @@ def splash():
     return render_template('splash.html')
         
 	
-# @app.route("/db_fancy")
-# def cities_page_fancy():
-# 	with db:
-# 		cur = db.cursor()
-# 		cur.execute("SELECT Name, CountryCode, Population FROM city ORDER BY Population LIMIT 15;")
-# 
-# 		query_results = cur.fetchall()
-# 	cities = []
-# 	for result in query_results:
-# 		cities.append(dict(name=result[0], country=result[1], population=result[2]))
-# 	return render_template('cities.html', cities=cities)
+@app.route('/blog')
+def blog():
+    return render_template('test.html')
+
+@app.route("/test")
+def test_chord():
+    return render_template('test.html')
 	
 @app.route("/foodgroups",methods=['GET'])
 def food_groups_page():
+
     user_location = request.args.get("origin")
+    if len(user_location) == 0:
+        return render_template('splash.html')
+        
     lat,lon,full_add,data = maps.geocode(user_location)
-    clusters,restdata, cluster_info = foodgroups.foodGroups(lat,lon)
+    sortkey = int(request.args.get("keychain"))
+    clusters,restdata, cluster_info = foodgroups.foodGroups(lat,lon,key = sortkey)
     restaurants = []
     for ix,a in restdata.iterrows():
         thisdat = a
         restaurants.append(dict(lat=thisdat['latitude']
                 ,long=thisdat['longitude']
                 ,clusterid=thisdat['ranking']
-                ))        
-    if len(cluster_info) >= 3:
-        return render_template('results3.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
-    elif len(cluster_info) == 2:
-        return render_template('results2.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
-    else:
-        return render_template('results1.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
-
+                ))      
+                
+    return render_template('results3.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
