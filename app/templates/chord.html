@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Patrick's Test</title>
+<style>
+
+/* @import url(../static/css/style.css); */
+ 
+#circle circle {
+fill: none;
+pointer-events: all;
+}
+ 
+.group path {
+fill-opacity: .5;
+}
+ 
+path.chord {
+stroke: #000;
+stroke-width: .25px;
+}
+ 
+#circle:hover path.fade {
+display: none;
+}
+ 
+</style>
+ 
+<head>
+
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="icon" href="../../favicon.ico">
+
+<title>new results</title>
+
+<!-- Bootstrap core CSS -->
+<link href="../static/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Custom styles for this template -->
+<link href="../static/css/starter-template.css" rel="stylesheet">
+
+</head>
+
+    <body>
+     <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/index">FoodGroupr</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="#about">About</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+    
+<div class="container">
+<br><br>
+    <div class="row row-centered">
+ 
+    <h1>September 19th, 2014 - Restaurant Co-occurrence</h1>
+    <br>
+    <p> If your friend told you she wanted fast food and you wanted sushi for dinner,
+    what are your chances you could find a neighborhood to visit where you could get both?
+    If you guessed this isn't terribly easy, congratulations, you'd have been right,
+    humans don't tend to build neighborhoods where both close to each other. 
+    This is just one insight clustering restaurants based on geospatial data allows one 
+    to visualize.  Taking data from foursqare, and the restaurants in 294 of the US's most
+    populous cities.
+
+    Let's use foursquare data and plot the ten most common categories for restaurants 
+    and illustrate the number of times we find restaurants of type X and Y together, what
+    we call the co-occurrence.  Here we'll use a chord diagram, where the thickness of the
+    chord represents the number of these co-occurrences,you can mouseover to focus on a 
+    particular restaurant genre in the plot below.</p>
+    
+    <div id="chart"></div>
+    
+    <p> We can see that American restaurants are often found near American 
+    restaurants, that green path that starts and ends on the green side of the chord
+    diagram, but is this statistically significant?  There are a lot of American
+    restaurants in the US (surprise!) so even if we randomly threw our restaurants into 
+    groupings we'd expect to see a decent amount of co-occurrence.
+    
+    To test this we can use a permutation test, shuffling the labels on all of our restaurant
+    data many times.  For each shuffle we then have a set of if humans built restaurants
+    with no regard to the type of restaurants.  In this shuffle we keep everything else but
+    the restaurant category constant, so a group of seven restaurants is still a group of 
+    seven restaurants in the same location but now instead of being say three American, two
+    Mexican, a sushi, and a fast food place they might be four American, two Chinsese and 
+    an Ethiopian restaurant.  Because we only shuffle the labels, not label randomly, 
+    the total number of restaurants of a given category is constant, we don't get to destroy
+    fast food places, no matter how much we might like to.</p>
+    
+    <br><br>
+    
+    <img src="../static/images/Overlap_significance.png" class="img-responsive center-block" style="width:400px;height:400px">
+    
+    </div>
+
+    
+</div>
+
+    <script src="http://d3js.org/d3.v2.min.js?2.8.1"></script>
+    <script>
+ 
+        var width = window.innerWidth - 50,
+        height = window.innerHeight - 100,
+        outerRadius = Math.min(width, height) / 2 - 10,
+        innerRadius = outerRadius - 24;
+ 
+        var formatPercent = d3.format(".1%");
+ 
+        var arc = d3.svg.arc()
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius);
+ 
+        var layout = d3.layout.chord()
+        .padding(0.04)
+        .sortSubgroups(d3.descending)
+        .sortChords(d3.ascending);
+ 
+        var path = d3.svg.chord()
+        .radius(innerRadius);
+ 
+        var svg = d3.select("#chart").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("id", "circle")
+        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+ 
+        svg.append("circle")
+        .attr("r", outerRadius);
+ 
+        d3.csv("../static/data/teams.csv", function(cities) {
+        d3.json("../static/data/matrix.json", function(matrix) {
+ 
+        // Compute the chord layout.
+        layout.matrix(matrix);
+ 
+        // Add a group per neighborhood.
+        var group = svg.selectAll(".group")
+        .data(layout.groups)
+        .enter().append("g")
+        .attr("class", "group")
+        .on("mouseover", mouseover);
+ 
+        // Add a mouseover title.
+        // group.append("title").text(function(d, i) {
+        // return cities[i].name + ": " + formatPercent(d.value) + " of origins";
+        // });
+ 
+        // Add the group arc.
+        var groupPath = group.append("path")
+        .attr("id", function(d, i) { return "group" + i; })
+        .attr("d", arc)
+        .style("fill", function(d, i) { return cities[i].color; });
+ 
+        // Add a text label.
+        var groupText = group.append("text")
+        .attr("x", 6)
+        .attr("dy", 15);
+ 
+        groupText.append("textPath")
+        .attr("xlink:href", function(d, i) { return "#group" + i; })
+        .text(function(d, i) { return cities[i].name; });
+ 
+        // Remove the labels that don't fit. :(
+        groupText.filter(function(d, i) { return groupPath[0][i].getTotalLength() / 2 - 16 < this.getComputedTextLength(); })
+        .remove();
+ 
+        // Add the chords.
+        var chord = svg.selectAll(".chord")
+        .data(layout.chords)
+        .enter().append("path")
+        .attr("class", "chord")
+        .style("fill", function(d) { return cities[d.source.index].color; })
+        .attr("d", path);
+ 
+        // Add an elaborate mouseover title for each chord.
+         chord.append("title").text(function(d) {
+         return cities[d.source.index].name
+         + " → " + cities[d.target.index].name
+         + ": " + formatPercent(d.source.value)
+         + "\n" + cities[d.target.index].name
+         + " → " + cities[d.source.index].name
+         + ": " + formatPercent(d.target.value);
+         });
+ 
+        function mouseover(d, i) {
+        chord.classed("fade", function(p) {
+        return p.source.index != i
+        && p.target.index != i;
+        });
+        }
+        });
+        });
+ 
+</script>
+ 
+</body>
+ 
+<footer>
+<p>Modified from Andrew RP's <a href="http://bl.ocks.org/AndrewRP/7468330">city visualization</a></p>
+<p><p>Built with <a href="http://d3js.org/">d3.js</a>.</aside></p>
+<p>Data from <a href="https://foursquare.com/">4square</a>.</p>
+</footer>

@@ -369,7 +369,7 @@ def clusterDescriptor(cluster_categories):
         return des_str
     
     if highlights[0][1]/float(len(cluster_categories)) <= 0.5:
-        des_str = "Try this lcoation for "
+        des_str = "Try this location for "
         for a in highlights:
             des_str += a[0]+ ", "
         des_str = des_str[:-2]

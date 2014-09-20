@@ -17,7 +17,7 @@ def splash():
 	
 @app.route('/blog')
 def blog():
-    return render_template('test.html')
+    return render_template('chord.html')
 
 @app.route("/test")
 def test_chord():
@@ -40,5 +40,5 @@ def food_groups_page():
                 ,long=thisdat['longitude']
                 ,clusterid=thisdat['ranking']
                 ))      
-                
+    
     return render_template('results3.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
