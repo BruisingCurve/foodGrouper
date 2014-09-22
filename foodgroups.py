@@ -224,13 +224,13 @@ def cleanData4Square(data):
         try:
             prefix = businesslist[i]['venue']['specials']['items'][0]['photo']['prefix']
             suffix = businesslist[i]['venue']['specials']['items'][0]['photo']['suffix']
-            photourl = prefix + '100X100' + suffix
+            photourl = prefix + '100x100' + suffix
             hasphoto = 2
         except:
             try:
                 prefix = businesslist[i]['venue']['featuredPhotos']['items'][0]['prefix']
                 suffix = businesslist[i]['venue']['featuredPhotos']['items'][0]['suffix']
-                photourl = prefix + '100X100' + suffix
+                photourl = prefix + '100x100' + suffix
                 hasphoto = 1
             except:
                 hasphoto = 0
@@ -321,7 +321,6 @@ def fetchData(lat,long,cache=False,offset=0):
         query = 'SELECT request_id, city FROM requests WHERE (latitude >= (%f *.9) and latitude <= (%f *1.1))'%(lat,lat)
         query +=' and (longitude >= (%f *.9) and longitude <= (%f *1.1)'%(long,long)
         query += 'order by abs((latitude - %f) + (longitude - %f)) limit 1'%(lat,long)
-        pdb.set_trace()
 
 
     params = get_search_parameters(lat,long,offset=offset)
@@ -434,6 +433,27 @@ def optimizeClusters(cluster_info,key=0):
 
     return sorted_clusters
     
+def clusterPhotos(cluster):
+    '''
+    Select which photo urls to take for the cluster to display on the front end
+    prioritize hasphoto==2 (photo for a special on 4sq as more likely to be food)
+    '''
+    photos = []
+    
+    if len(cluster.photo) <= 3:
+        for a in cluster.photo:
+            if len(a) > 0:
+                photos.append(str(a))
+        return photos
+    else:
+        for a in cluster.photo[cluster.hasphoto==2]:
+            photos.append(str(a))
+        for a in cluster.photo[cluster.hasphoto==1]:
+            photos.append(str(a))
+        
+        photos = photos[:4]
+        return photos
+    
 def foodGroups(lat,long,key=0):
     '''
     foodGroups: The method for building your foodgroups.
@@ -505,16 +525,15 @@ def foodGroups(lat,long,key=0):
         cluster["rest_frac"] = len(thiscluster)/float(len(data))
         cluster["categories"] = set(thiscluster["categories"])
         cluster["var_score"] = len(set(thiscluster["categories"]))/float(len(thiscluster))
-#         cluster["hull"] = sp.spatial.ConvexHull(X[labels==jj])
         cluster["Description"] = clusterDescriptor(thiscluster["categories"])
         cluster["center"] = [np.mean(thiscluster['latitude']),np.mean(thiscluster['longitude'])]
-        
-        # Find the point nearest the center
         temp_cluster = thiscluster[['latitude','longitude','street']]
         temp_cluster['dist_to_mean'] = abs(thiscluster['latitude']-cluster["center"][0]) + abs(thiscluster['longitude']-cluster['center'][1])
         cluster["name"] = temp_cluster.sort(columns='dist_to_mean')[:1]["street"].iloc[0]
         cluster["avg_dist"] = np.mean(thiscluster['dist_to_user'])
         cluster["open_ratio"] =  sum(thiscluster.IsOpenNow)/float(len(thiscluster))
+        cluster["photos"] = clusterPhotos(thiscluster)
+        
         cluster_info.append(cluster)
 
     cluster_info = optimizeClusters(cluster_info,key=key)

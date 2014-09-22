@@ -75,19 +75,21 @@ display: none;
     <br>
     <p> If your friend told you she wanted fast food and you wanted sushi for dinner,
     what are your chances you could find a neighborhood to visit where you could get both?
-    If you guessed this isn't terribly easy, congratulations, you'd have been right,
-    humans don't tend to build neighborhoods where both close to each other. 
-    This is just one insight clustering restaurants based on geospatial data allows one 
-    to visualize.  Taking data from foursqare, and the restaurants in 294 of the US's most
-    populous cities.
-
-    Let's use foursquare data and plot the ten most common categories for restaurants 
+    If you guessed this isn't easy, you'd have been right,
+    humans don't tend to build neighborhoods where both are near each other.  How can we
+    determine this?  Statistics, and a bit of data-hacking.  
+    
+    Lets pull the restaurant data on foursquare from the city centers of 294 of the most populous cities in the US,
+    NYC to College Station, Texas.
+    
+    We divide the restaurants found into the ten most common categories for restaurants 
     and illustrate the number of times we find restaurants of type X and Y together, what
-    we call the co-occurrence.  Here we'll use a chord diagram, where the thickness of the
-    chord represents the number of these co-occurrences,you can mouseover to focus on a 
+    we call the co-occurrence.  Here we'll plot these using a chord diagram, where the thickness of the
+    chord represents the number of these co-occurrences.  You can mouseover to focus on a 
     particular restaurant genre in the plot below.</p>
     
-    <div id="chart"></div>
+    
+    <div id="chart" class="center-block"></div>
     
     <p> We can see that American restaurants are often found near American 
     restaurants, that green path that starts and ends on the green side of the chord

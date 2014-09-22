@@ -93,7 +93,7 @@
    return d3.range(0, d.value, 100).map(function(v, i) {
      return {
        angle: v * k + d.startAngle,
-       label: i % 1 ? null : v
+       label: i % 10 ? null : v
      };
    });
  }

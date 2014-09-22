@@ -104,6 +104,11 @@
                 {% endif %}
                   <div class="panel-body">
                    <p> {{ thiscard['Description'] }} </p>
+                   {% for photo in thiscard['photos'] %}
+                   <div class="col-sm-3 col-centered">
+                    <img src="{{ photo }}" alt="">
+                    </div>
+                   {% endfor %}
                   </div>
                 </div>
                 <div class="panel-footer">
