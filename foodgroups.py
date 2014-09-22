@@ -10,7 +10,6 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 import matplotlib.pyplot as plt
-import jsonOpen, figSetup
 from collections import defaultdict, Counter
 from sklearn.cluster import DBSCAN
 from sklearn import metrics
@@ -568,7 +567,7 @@ def main():
     labels = clusters['labels']
     core_samples_mask = clusters['core_samples_mask']
 
-    fig,ax = figSetup.figSetup()
+#     fig,ax = figSetup.figSetup()
     # Black removed and is used for noise instead.
     unique_labels = set(labels)
     colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
