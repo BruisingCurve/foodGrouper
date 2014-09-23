@@ -73,43 +73,62 @@ display: none;
  
     <h1>September 19th, 2014 - Restaurant Co-occurrence</h1>
     <br>
-    <p> If your friend told you she wanted fast food and you wanted sushi for dinner,
-    what are your chances you could find a neighborhood to visit where you could get both?
-    If you guessed this isn't easy, you'd have been right,
-    humans don't tend to build neighborhoods where both are near each other.  How can we
-    determine this?  Statistics, and a bit of data-hacking.  
+    <p> If you and your friend wanted dinner tonight but couldn't agree on what to eat
+    what are your chances you could find a neighborhood to visit where you could find both
+    a sushi restaurant and a fast-food restaurant?
+    If you guessed this isn't easy, you'd have been right, but how can we verify this hunch?  
+    Time for a bit of statistics with a bit of data-hacking.  
     
-    Lets pull the restaurant data on foursquare from the city centers of 294 of the most populous cities in the US,
-    NYC to College Station, Texas.
+    Lets pull the restaurant data from foursquare using the city centers of the 294 most
+    populous cities in the US, as our test bed.  That's NYC to College Station, Texas if
+    you were wondering.
     
     We divide the restaurants found into the ten most common categories for restaurants 
     and illustrate the number of times we find restaurants of type X and Y together, what
-    we call the co-occurrence.  Here we'll plot these using a chord diagram, where the thickness of the
-    chord represents the number of these co-occurrences.  You can mouseover to focus on a 
-    particular restaurant genre in the plot below.</p>
-    
+    we call co-occurrence, and display the results as a chord diagram.</p>
     
     <div id="chart" class="center-block"></div>
     
-    <p> We can see that American restaurants are often found near American 
-    restaurants, that green path that starts and ends on the green side of the chord
-    diagram, but is this statistically significant?  There are a lot of American
+    <p> We immediately see that American restaurants are often found near American 
+    restaurants, the green path that starts and ends on the green side of the chord
+    diagram.  But let's be quantitative, we need to ask if this is really significant. 
+    There are a lot of American
     restaurants in the US (surprise!) so even if we randomly threw our restaurants into 
     groupings we'd expect to see a decent amount of co-occurrence.
     
     To test this we can use a permutation test, shuffling the labels on all of our restaurant
     data many times.  For each shuffle we then have a set of if humans built restaurants
-    with no regard to the type of restaurants.  In this shuffle we keep everything else but
-    the restaurant category constant, so a group of seven restaurants is still a group of 
+    with no regard to the type of restaurants.  In this shuffle we're going to keep 
+    everything else but the restaurant category constant, so a group of seven restaurants 
+    is still a group of 
     seven restaurants in the same location but now instead of being say three American, two
-    Mexican, a sushi, and a fast food place they might be four American, two Chinsese and 
+    Mexican, a sushi joint, and a fast food place they might be labeled four American, two Chinese and 
     an Ethiopian restaurant.  Because we only shuffle the labels, not label randomly, 
     the total number of restaurants of a given category is constant, we don't get to destroy
-    fast food places, no matter how much we might like to.</p>
+    fast food places, no matter how much we might like to.
+    
+    Doing this shuffle 1000 times we can visualize the distribution we'd expect if restaurants
+    were built with no regard to their restaurant categories.  Having done this we can characterize
+    the distribution using its mean and standard-deviation, here we'll assume the underlying
+    distributions are normal distributions (they're close).  We then characterize how far
+    away from this distribution is the real-world data</p>
     
     <br><br>
     
     <img src="../static/images/Overlap_Significance.png" class="img-responsive center-block" style="width:400px;height:400px">
+    
+    <p> Turns out it's pretty far in a few cases, we immediately see that Chinese restaurants
+    are much more frequently found together than we'd have expected from random placement, 
+    9-standard deviations away, that's a lot!  Does this make sense?  Kind-of, after all the idea
+    of "china-town" is relatively common in most major cities, and we biased ourselves by only
+    pulling data from these metropolitan areas.  We'd expect that if we looked at more 
+    rural areas this number would go down (I encourage you to try it!).
+    
+    We also see an answer to our original question, it turns out sushi places and fast-food
+    restaurants are found together less often than we'd expect at random.  So I hope you and
+    your friend can think of some new ideas.  If you're looking to get into the food business
+    however, maybe there's a market for a fast-food sushi place, would be interesting to find
+    out. 
     
     </div>
 
