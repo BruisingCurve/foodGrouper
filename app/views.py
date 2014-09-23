@@ -17,7 +17,7 @@ def splash():
 	
 @app.route('/blog')
 def blog():
-    return render_template('chord.html')
+    return render_template('blogsplash.html')
 
 @app.route("/test")
 def test_chord():
