@@ -23,10 +23,14 @@ def blog():
 def chinese():
     return render_template('chord.html')
 
-@app.route("/test")
-def test_chord():
-    return render_template('test.html')
-	
+@app.route("/about")
+def about_page():
+    return render_template('FoodGrouprSlides/index.html')
+
+@app.route("/contact")
+def connect_page():
+    return render_template('contact.html')
+
 @app.route("/foodgroups",methods=['GET'])
 def food_groups_page():
 
