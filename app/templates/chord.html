@@ -139,33 +139,33 @@ display: none;
     <script>
  
         var width = window.innerWidth - 50,
-        height = window.innerHeight - 100,
-        outerRadius = Math.min(width, height) / 2 - 10,
-        innerRadius = outerRadius - 24;
- 
+            height = window.innerHeight - 100,
+            outerRadius = Math.min(width, height) / 2 - 10,
+            innerRadius = outerRadius - 24;
+     
         var formatPercent = d3.format(".1%");
  
         var arc = d3.svg.arc()
-        .innerRadius(innerRadius)
-        .outerRadius(outerRadius);
+            .innerRadius(innerRadius)
+            .outerRadius(outerRadius);
  
         var layout = d3.layout.chord()
-        .padding(0.04)
-        .sortSubgroups(d3.descending)
-        .sortChords(d3.ascending);
+            .padding(0.04)
+            .sortSubgroups(d3.descending)
+            .sortChords(d3.ascending);
  
         var path = d3.svg.chord()
-        .radius(innerRadius);
+            .radius(innerRadius);
  
         var svg = d3.select("#chart").append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .append("g")
-        .attr("id", "circle")
-        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
- 
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+                .attr("id", "circle")
+                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+     
         svg.append("circle")
-        .attr("r", outerRadius);
+            .attr("r", outerRadius);
  
         d3.csv("../static/data/teams.csv", function(cities) {
         d3.json("../static/data/matrix.json", function(matrix) {
@@ -175,15 +175,17 @@ display: none;
  
         // Add a group per neighborhood.
         var group = svg.selectAll(".group")
-        .data(layout.groups)
-        .enter().append("g")
-        .attr("class", "group")
-        .on("mouseover", mouseover);
- 
+            .data(layout.groups)
+            .enter().append("g")
+            .attr("class", "group")
+            .on("mouseover", mouseover)
+            .on("mouseout",mouseover);
+
+     
         // Add a mouseover title.
-        // group.append("title").text(function(d, i) {
-        // return cities[i].name + ": " + formatPercent(d.value) + " of origins";
-        // });
+        group.append("title").text(function(d, i) {
+        return cities[i].name + ": " + d3.round(d.value) + " restaurants";
+        });
  
         // Add the group arc.
         var groupPath = group.append("path")
@@ -215,23 +217,23 @@ display: none;
         // Add an elaborate mouseover title for each chord.
          chord.append("title").text(function(d) {
          return cities[d.source.index].name
-         + " → " + cities[d.target.index].name
-         + ": " + formatPercent(d.source.value)
-         + "\n" + cities[d.target.index].name
-         + " → " + cities[d.source.index].name
-         + ": " + formatPercent(d.target.value);
+         + " with " + cities[d.target.index].name
+         + ": " + d3.round(d.source.value)
          });
  
         function mouseover(d, i) {
-        chord.classed("fade", function(p) {
-        return p.source.index != i
-        && p.target.index != i;
+            chord.classed("fade", function(p) {
+                return p.source.index != i
+                && p.target.index != i;
+            });
+            }
+            });
+
         });
-        }
-        });
-        });
+
+
  
-</script>
+    </script>
  
 </body>
  
