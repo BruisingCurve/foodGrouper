@@ -18,6 +18,10 @@ def splash():
 @app.route('/blog')
 def blog():
     return render_template('blogsplash.html')
+    
+@app.route('/chinese')
+def chinese():
+    return render_template('chord.html')
 
 @app.route("/test")
 def test_chord():
