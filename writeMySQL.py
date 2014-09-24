@@ -16,10 +16,14 @@ def cleanData(df):
     '''
     Clean up possible unicode characters in the data
     '''
-    df.full_address = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.full_address]
-    df.name = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.name]
-    df.categories = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.categories]
-    df.street = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.street]
+    if isinstance(df.full_address,unicode):
+        df.full_address = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.full_address]
+    if isinstance(df.name,unicode):
+        df.name = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.name]
+    if isinstance(df.categories,unicode):
+        df.categories = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.categories]
+    if isinstance(df.categories,unicode):
+        df.street = [unicodedata.normalize('NFKD',thisword).encode('ascii','ignore') for thisword in df.street]
     return df
 
 def noInterrupt(con,cur,insert,df,c_info,cluster_results):
