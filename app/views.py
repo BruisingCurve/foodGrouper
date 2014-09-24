@@ -40,7 +40,7 @@ def food_groups_page():
         
     lat,lon,full_add,data = maps.geocode(user_location)
     sortkey = int(request.args.get("keychain"))
-    clusters,restdata, cluster_info = foodgroups.foodGroups(lat,lon,key = sortkey)
+    clusters,restdata, cluster_info = foodgroups.foodGroups(lat,lon,key = sortkey,cache=True)
     restaurants = []
     for ix,a in restdata.iterrows():
         thisdat = a

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-WhereToLunch.py
+foodgroups.py
 author p.phelps
 DBScan clustering of restaurants
 """
@@ -21,6 +21,7 @@ import foursquare
 import pdb, time
 import app.helpers.maps as maps
 import pymysql as mdb
+import writeMySQL as wSQL
 
 class struct():
     pass
@@ -80,14 +81,6 @@ def clusterThose(G,eps=0.1,min_samples=4):
     return X, n_clusters_, labels, core_samples_mask
     
 def get_search_parameters(lat,long,offset=0):
-    #See the Yelp API for more details
-#     params = {}
-#     params["category_filter"] = "restaurants"
-#     params["ll"] = "{},{}".format(str(lat),str(long))
-#     #params["radius_filter"] = "16092"
-#     params["sort"] = "1"
-#     params["limit"] = "20"
-#     params["offset"] = "%i"%offset
     
     params = {}
     params['ll'] = "{},{}".format(str(lat),str(long))
@@ -306,21 +299,10 @@ def get_results(params):
    
     return data
     
-def fetchData(lat,long,cache=False,offset=0):
+def fetchData(lat,long,offset=0):
     '''
-    This fetches data live from the fsq api, if cache = true it compares to the backend
-    mysql database to display the closest data held to current latlong.
+    This fetches data live from the fsq api
     '''
-
-    if cache:
-        configini = configparser.ConfigParser()
-        configini.read('app/secrets/config.ini')
-        db = mdb.connect(user=configini['MYSQL']['user'],host="localhost"
-            ,passwd=configini['MYSQL']['word'],db=configini['MYSQL']['db'])
-        query = 'SELECT request_id, city FROM requests WHERE (latitude >= (%f *.9) and latitude <= (%f *1.1))'%(lat,lat)
-        query +=' and (longitude >= (%f *.9) and longitude <= (%f *1.1)'%(long,long)
-        query += 'order by abs((latitude - %f) + (longitude - %f)) limit 1'%(lat,long)
-
 
     params = get_search_parameters(lat,long,offset=offset)
     data = get_results(params)
@@ -453,7 +435,7 @@ def clusterPhotos(cluster):
         photos = photos[:4]
         return photos
     
-def foodGroups(lat,long,key=0):
+def foodGroups(lat,lng,key=0,cache=False):
     '''
     foodGroups: The method for building your foodgroups.
     Note: default behavior used popularity as the sorting metric (key=0) and only looks for 
@@ -462,10 +444,10 @@ def foodGroups(lat,long,key=0):
     
     center = struct()
     center.lat = lat
-    center.long = long
+    center.long = lng
     
     t = time.time()
-    data = fetchData(center.lat,center.long,cache=False)
+    data = fetchData(center.lat,center.long)
 
     print 'Full Retrieve %f s'%(time.time()-t)
     data['dist_to_user'] = data['distance'] * 0.000621371 #meters to miles
@@ -554,6 +536,9 @@ def foodGroups(lat,long,key=0):
     clusters['labels'] = labels
     clusters['core_samples_mask'] = core_samples_mask
 
+    if cache:
+        wSQL.writeMySQL(center.lat,center.long,clusters,newdata,cluster_info)
+
     return clusters, newdata, cluster_info
 
 def main():
@@ -561,13 +546,12 @@ def main():
     center = struct()
     center.lat = 37.786382
     center.long = -122.432883
-    clusters,data,cluster_info = foodGroups(center.lat, center.long )
+    clusters,data,cluster_info = foodGroups(center.lat, center.long, cache=True )
     X=clusters['X']
     n_clusters_ = clusters['n_clusters']
     labels = clusters['labels']
     core_samples_mask = clusters['core_samples_mask']
 
-#     fig,ax = figSetup.figSetup()
     # Black removed and is used for noise instead.
     unique_labels = set(labels)
     colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
