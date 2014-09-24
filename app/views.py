@@ -33,20 +33,24 @@ def connect_page():
 
 @app.route("/foodgroups",methods=['GET'])
 def food_groups_page():
-
-    user_location = request.args.get("origin")
-    if len(user_location) == 0:
-        return render_template('splash.html')
+    try:
+        user_location = request.args.get("origin")
+        if len(user_location) == 0:
+            return render_template('oops.html')
+            
+        lat,lon,full_add,data = maps.geocode(user_location)
+        sortkey = int(request.args.get("keychain"))
+        clusters,restdata, cluster_info = foodgroups.foodGroups(lat,lon,key = sortkey,cache=True)
+        restaurants = []
+        for ix,a in restdata.iterrows():
+            thisdat = a
+            restaurants.append(dict(lat=thisdat['latitude']
+                    ,long=thisdat['longitude']
+                    ,clusterid=thisdat['ranking']
+                    ))      
         
-    lat,lon,full_add,data = maps.geocode(user_location)
-    sortkey = int(request.args.get("keychain"))
-    clusters,restdata, cluster_info = foodgroups.foodGroups(lat,lon,key = sortkey,cache=True)
-    restaurants = []
-    for ix,a in restdata.iterrows():
-        thisdat = a
-        restaurants.append(dict(lat=thisdat['latitude']
-                ,long=thisdat['longitude']
-                ,clusterid=thisdat['ranking']
-                ))      
-    
-    return render_template('results3.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
+        return render_template('results3.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
+
+    except:
+        # Well something went wrong in here
+        return render_template('oops.html')
