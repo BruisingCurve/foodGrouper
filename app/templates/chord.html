@@ -111,18 +111,21 @@ display: none;
     were built with no regard to their restaurant categories.  Having done this we can characterize
     the distribution using its mean and standard-deviation, here we'll assume the underlying
     distributions are normal distributions (they're close).  We then characterize how far
-    away from this distribution is the real-world data</p>
+    away from this distribution is the real-world data, note for this plot I've capped the binning so anything
+    below/above 5-sigma from the mean appears at 5-sigma</p>
     
     <br><br>
     
     <img src="../static/images/Overlap_Significance.png" class="img-responsive center-block" style="width:600px;height:600px">
     
+    <br><br>
+    
     <p> Turns out it's pretty far in a few cases, we immediately see that Chinese restaurants
-    are much more frequently found together than we'd have expected from random placement, 
-    9-standard deviations away, that's a lot!  Does this make sense?  Kind-of, after all the idea
-    of "china-town" is relatively common in most major cities, and we biased ourselves by only
-    pulling data from these metropolitan areas.  We'd expect that if we looked at more 
-    rural areas this number would go down (I encourage you to try it!).
+    are much more frequently found together than we'd have expected from random placement.
+    Does this make sense?  Kind-of, after all the idea
+    of "Chinatown" is relatively common in most major cities, and we biased ourselves by only
+    pulling data from these metropolitan areas.  We might expect that if we looked at more 
+    rural areas this significance measure would go down (I encourage you to try it!).
     
     We also see an answer to our original question, it turns out sushi places and fast-food
     restaurants are found together less often than we'd expect at random.  So I hope you and
