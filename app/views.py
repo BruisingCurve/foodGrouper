@@ -47,6 +47,9 @@ def food_groups_page():
             restaurants.append(dict(lat=thisdat['latitude']
                     ,long=thisdat['longitude']
                     ,clusterid=thisdat['ranking']
+                    ,url=thisdat['url']
+                    ,name=thisdat['name']
+                    ,pic=thisdat['photo']
                     ))      
         return render_template('results3.html',results=restaurants,c_info = cluster_info, user_lat = lat, user_long = lon, faddress = full_add, ncluster = clusters['n_clusters'])
 
