@@ -106,7 +106,9 @@
                    <p> {{ thiscard['Description'] }} </p>
                    {% for photo in thiscard['photos'] %}
                    <div class="col-sm-3 col-centered">
-                    <img src="{{ photo }}" alt="">
+                    <a href= "{{ thiscard['rest_url'][loop.index-1] }}">
+                      <img src="{{ photo }}" alt="" style="border:0">
+                    </a>
                     </div>
                    {% endfor %}
 
