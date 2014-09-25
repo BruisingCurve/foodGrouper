@@ -147,9 +147,8 @@
     <!-- Google Maps plotting
     ==============================================================-->
     <script type="text/javascript"
-        src="http://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=true_or_false">
+        src="http://maps.googleapis.com/maps/api/js?sensor=true">
     </script>
-    
 
     
     <script>    
@@ -169,7 +168,7 @@
 
         {% for result in results %}
             {% if result['clusterid'] < 4 %}
-              maprest(var_ourmap,bounds,{{ result['lat'] }}, {{ result['long'] }}, {{ result['clusterid'] }})
+              maprest( var_ourmap,bounds,{{ result['lat'] }}, {{ result['long'] }}, {{ result['clusterid'] }}, "{{ result['url'] }}","{{ result['pic'] }}", "{{ result['name'] }}" )
             {% endif %}
         {% endfor %}
         
@@ -201,22 +200,36 @@
         
 
         
-        function maprest(this_map,bounds,thislat,thislong,thisID) {
+        function maprest(this_map,bounds,thislat,thislong,thisID,thisUrl,thisPic, thisName) {
             var latlong = new google.maps.LatLng(thislat,thislong)
+
             bounds.extend(latlong);
 
             var this_marker = new google.maps.Marker({
-                position: latlong,
-                icon: getMakerImage(thisID)
-                })
+              position: latlong,
+              icon: getMakerImage(thisID),
+              map:this_map
+              })
 
-            this_marker.setMap(this_map);   
-            
-        }
+            var chHtml ="<a href="+thisUrl
+                        +" target='_blank'>"+thisName+"</a></h3><div>"
+                        +"<img src="+thisPic
+                        +" width='100' hieght='100' />"
+                        +"</div>";
+
+            var chInfoWindow = new google.maps.InfoWindow({
+              content: chHtml,
+              maxWidth:250
+              });
+
+            google.maps.event.addListener(this_marker, 'click', function() {
+              chInfoWindow.open(this_map, this_marker);
+              });
+        };
         
                     
          
-    }
+    };
 
     google.maps.event.addDomListener(window, 'load', init_map);
 
