@@ -336,7 +336,7 @@ def clusterDescriptor(cluster_categories):
     # Human parsing
     if len(cluster_categories) < 4:
         cat_count = 0
-        des_str = "Edible genres include: "
+        des_str = "Try this location for "
         for a in set(our_descriptors):
             cat_count += 1
             des_str += a.lower()
@@ -345,7 +345,7 @@ def clusterDescriptor(cluster_categories):
             elif cat_count == len(set(our_descriptors))-1:
                 des_str += ' and '
             else:
-                des_str += " here."
+                des_str += "."
         return des_str
     
     if highlights[0][1]/float(len(cluster_categories)) <= 0.5:
@@ -355,7 +355,7 @@ def clusterDescriptor(cluster_categories):
         des_str = des_str[:-2]
         
         if len(cluster_categories) > len(highlights):
-            des_str += " and %i other categories."%(len(counts)-3)
+            des_str += " and %i other categories."%(len(counts)-4)
         else:
             des_str += "."
         return des_str
