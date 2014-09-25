@@ -492,16 +492,16 @@ def foodGroups(lat,lng,key=0,cache=False):
             cluster["popularity"] = np.mean(thiscluster.review_count)
         
         if np.max(thiscluster.price) == np.min(thiscluster.price):
-            minprice_string,maxprice_string = priceString(cluster["maxprice"])
+            minprice_string,maxprice_string = priceString(np.max(thiscluster.price))
             if len(maxprice_string) == 0:
                 cluster["price_string"] = minprice_string
             else:
                 cluster["price_string"] = minprice_string + " to " + maxprice_string
         else:
-            minprice_string,throwaway = priceString(cluster["minprice"])
-            throwaway,maxprice_string = priceString(cluster["maxprice"])
+            minprice_string,throwaway = priceString(np.min(thiscluster.price))
+            maxprice_string,throwaway = priceString(np.max(thiscluster.price))
             cluster["price_string"] = minprice_string + " to " + maxprice_string
-            
+        
         cluster["rest_num"] = len(thiscluster)
         cluster["rest_frac"] = len(thiscluster)/float(len(data))
         cluster["categories"] = set(thiscluster["categories"])
