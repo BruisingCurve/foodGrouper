@@ -208,9 +208,9 @@
             var this_marker = new google.maps.Marker({
                 position: latlong,
                 icon: getMakerImage(thisID)
-                map: this_map;
                 })
 
+            this_marker.setMap(this_map);   
             
         }
         
