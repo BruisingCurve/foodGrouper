@@ -109,6 +109,15 @@
                     <img src="{{ photo }}" alt="">
                     </div>
                    {% endfor %}
+
+                   <div class="col-sm-12 col-centered">
+                    <p> <br> Restaurants:  
+                      {% for a in thiscard['rest_url'] %}
+                      <a href="{{ thiscard['rest_url'][loop.index-1] }}">"{{ thiscard['rest_list'][loop.index-1] }}"</a> 
+                      {% endfor %}
+                    </p>
+                  </div>
+
                   </div>
                 </div>
                 <div class="panel-footer">
