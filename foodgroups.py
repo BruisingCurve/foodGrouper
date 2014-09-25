@@ -538,10 +538,10 @@ def foodGroups(lat,lng,key=0,cache=False):
     clusters['labels'] = labels
     clusters['core_samples_mask'] = core_samples_mask
 
-    newdata = newdata.drop('url', 1) # Don't save urls to mysql
+    sqldata = newdata.drop('url', 1) # Don't save urls to mysql
 
     if cache:
-        wSQL.writeMySQL(center.lat,center.long,clusters,newdata,cluster_info)
+        wSQL.writeMySQL(center.lat,center.long,clusters,sqldata,cluster_info)
     return clusters, newdata, cluster_info
 
 def main():
