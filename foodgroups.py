@@ -184,7 +184,7 @@ def cleanData4Square(data):
     
     df = pd.DataFrame(columns = ('name','full_address','street','rating',
             'review_count','distance','categories','price','latitude','longitude','latlongfound',
-            'photo','hasphoto','IsOpenNow'))
+            'photo','hasphoto','IsOpenNow','url'))
     failures = []
     for i in range(len(businesslist)):
     
@@ -244,6 +244,7 @@ def cleanData4Square(data):
                     , photourl
                     , hasphoto
                     , businesslist[i]['venue']['hours']['isOpen']
+                    , 'https://foursquare.com/v/'+businesslist[i]['venue']['id']
                     ]
         except:
             pass
@@ -514,7 +515,8 @@ def foodGroups(lat,lng,key=0,cache=False):
         cluster["avg_dist"] = np.mean(thiscluster['dist_to_user'])
         cluster["open_ratio"] =  sum(thiscluster.IsOpenNow)/float(len(thiscluster))
         cluster["photos"] = clusterPhotos(thiscluster)
-        
+        cluster['rest_list'] = list(thiscluster['name'])
+        cluster['rest_url'] = list(thiscluster['url'])
         cluster_info.append(cluster)
 
     cluster_info = optimizeClusters(cluster_info,key=key)
@@ -536,9 +538,10 @@ def foodGroups(lat,lng,key=0,cache=False):
     clusters['labels'] = labels
     clusters['core_samples_mask'] = core_samples_mask
 
+    newdata = newdata.drop('url', 1) # Don't save urls to mysql
+
     if cache:
         wSQL.writeMySQL(center.lat,center.long,clusters,newdata,cluster_info)
-
     return clusters, newdata, cluster_info
 
 def main():
