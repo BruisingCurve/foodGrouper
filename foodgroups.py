@@ -455,7 +455,7 @@ def foodGroups(lat,lng,key=0,cache=False):
 
     n_clusters_ = -1
     eps = 0.1
-    min_samples = 4
+    min_samples = 3
     
     t = time.time()
 
