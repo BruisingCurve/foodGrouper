@@ -435,6 +435,7 @@ def clusterPhotos(cluster):
         
         photos = photos[:4]
         return photos
+
     
 def foodGroups(lat,lng,key=0,cache=False):
     '''
@@ -474,7 +475,7 @@ def foodGroups(lat,lng,key=0,cache=False):
 
     # Let's compute cluster informatics
     cluster_info = []
-    for jj in range(n_clusters_):
+    for jj in range(-1,n_clusters_):
         thiscluster = data[labels==jj]
         cluster = {}
         cluster["label"] = jj
@@ -517,9 +518,13 @@ def foodGroups(lat,lng,key=0,cache=False):
         cluster["photos"] = clusterPhotos(thiscluster)
         cluster['rest_list'] = list(thiscluster['name'])
         cluster['rest_url'] = list(thiscluster['url'])
-        cluster_info.append(cluster)
+        if jj == -1:
+            null_cluster = cluster
+        else:
+            cluster_info.append(cluster)
 
     cluster_info = optimizeClusters(cluster_info,key=key)
+    cluster_info.append(null_cluster)
     
     # Order the data
     data['labels'] = labels
@@ -540,8 +545,9 @@ def foodGroups(lat,lng,key=0,cache=False):
 
     sqldata = newdata.drop('url', 1) # Don't save urls to mysql
 
-    if cache:
-        wSQL.writeMySQL(center.lat,center.long,clusters,sqldata,cluster_info)
+    # if cache:
+    #     wSQL.writeMySQL(center.lat,center.long,clusters,sqldata,cluster_info)
+
     return clusters, newdata, cluster_info
 
 def main():

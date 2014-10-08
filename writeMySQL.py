@@ -92,7 +92,7 @@ def writeMySQL(lat,lng,clusters,data,c_info):
     cluster_results['labels'] = clusters['labels']
     cluster_results['core_samples_mask'] = clusters['core_samples_mask']
     cluster_results['eps'] = clusters['eps']
-    cluster_results=cluster_results[cluster_results.labels!= -1]
+    #cluster_results=cluster_results[cluster_results.labels!= -1]
 
     insert_request = "INSERT INTO foodgrouper.requests(latitude,longitude) VALUES (%f, %f);"%(lat, lng)
     
